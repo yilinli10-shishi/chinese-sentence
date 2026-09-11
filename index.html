@@ -3,164 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國語三階造句抽卡與班級成果平台</title>
-  
-  <!-- Chosen Palette: Warm Amber & Nature Tones (Warm Amber, Sky Blue, Emerald Green, Soft Pink, Warm Neutral Background) -->
-  
-  <!-- Application Structure Plan:
-       1. Top Header & Navigation Bar: Student Learning Flow (完整句小達人 檢測 -> 造句工作台 創作 -> 全班彙整牆 展示 -> 卡池檢視與管理 統計) and 3-Tier Difficulty Selector Ladder (初階, 進階, 挑戰).
-       2. Tab 1: 完整句小達人 (Quiz Mode): Dynamic fill-in-the-blank questions generated from current tier vocabulary to diagnose missing sentence elements.
-       3. Tab 2: 造句工作台 (Workbench): Four element card slots (Time, Person, Location, Event), custom card quick-add modal/drawer for real-time card generation, card eraser/blanking controls for self-directed writing, typing canvas with punctuation inserters, TTS speech reader, and color-coded standard solution toggle.
-       4. Tab 3: 全班彙整牆 (Class Gallery): Interactive submission dashboard with 3-tier filters (初階/進階/挑戰), like counts, Excel/CSV export, and print report layout.
-       5. Tab 4: 卡池檢視與自訂卡片 (Analytics & Custom Card Management): Responsive Chart.js doughnut chart for tier card proportions, custom card creation panel with localStorage persistence, and searchable card lists with single-card delete controls.
-       Rationale: Empowers teachers and students to dynamically expand the vocabulary pool directly from the web interface without requiring Excel re-imports.
-  -->
-
-  <!-- Visualization & Content Choices:
-       - Card Slots: Color-coded Tailwind cards (Amber=Time, Sky=Person, Emerald=Location, Pink=Event) displaying pure Taiwanese primary school vocabulary mapped to 3 difficulty levels.
-       - Custom Card System: Interactive modal & inline form with real-time validation, automatic localStorage syncing, and custom tag badges.
-       - Data Analytics: Responsive Chart.js Canvas Doughnut inside styled container. NO SVG used.
-       - Interactive Canvas: Styled Textarea with instant punctuation inserters and SpeechSynthesis API for TTS.
-       - Excel Integration: SheetJS (xlsx.full.min.js) with smart Chinese tier parsing.
-  -->
-
-  <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+  <title>國語造句訓練營</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Chart.js CDN -->
+  <!-- SheetJS for Excel Import/Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- Chart.js for Card Analytics -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- SheetJS (XLSX) CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- QRCode.js for generating classroom share links -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+  <!-- Google Fonts: Noto Sans TC & Fredoka -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-    
     body {
-      font-family: 'Noto Sans TC', sans-serif;
-      background-color: #fdfbf7;
-      color: #2d3748;
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      background-color: #FDFBF7;
+      color: #2D3748;
     }
-
-    /* Custom Chart Container Rules */
+    .font-fredoka {
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    }
+    .slot-transition {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .slot-transition:hover {
+      transform: translateY(-3px);
+    }
+    .quiz-blank-box {
+      border-bottom: 3px dashed #7C3AED;
+      padding: 0 10px;
+      color: #7C3AED;
+      font-weight: 900;
+      display: inline-block;
+      min-width: 140px;
+      text-align: center;
+      background: rgba(124, 58, 237, 0.08);
+      border-radius: 8px;
+    }
     .chart-container {
       position: relative;
       width: 100%;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-      height: 280px;
-      max-height: 320px;
+      max-width: 320px;
+      height: 240px;
+      margin: 0 auto;
     }
-
-    @media (min-width: 768px) {
-      .chart-container {
-        height: 300px;
-      }
-    }
-
-    /* Card Draw Animation */
-    .card-flip {
-      animation: flipIn 0.4s ease-out forwards;
-    }
-
-    @keyframes flipIn {
-      0% { transform: scale(0.9) rotateY(90deg); opacity: 0; }
-      100% { transform: scale(1) rotateY(0deg); opacity: 1; }
-    }
-
-    /* Custom Scrollbar */
+    /* Custom Scrollbars */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #f1f1f1;
+      background: #F1F1F1;
       border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
+      background: #CBD5E1;
       border-radius: 4px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+      background: #94A3B8;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between">
+<body class="min-h-screen flex flex-col antialiased selection:bg-amber-200">
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- Custom Card Modal (師生快速新增卡片彈窗) -->
-  <div id="custom-card-modal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 hidden backdrop-blur-sm">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-amber-200 space-y-4 animate-in fade-in zoom-in duration-200">
-      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
-        <h3 class="text-lg font-black text-amber-950 flex items-center gap-2">
-          <span>✨</span> 師生新增自訂卡片
-        </h3>
-        <button onclick="toggleCustomCardModal(false)" class="text-gray-400 hover:text-gray-600 font-bold text-lg p-1">✕</button>
-      </div>
-
-      <p class="text-xs text-gray-500">老師與學生可以輸入自訂詞彙，新增後會立即放入對應階梯的抽卡池中，並自動儲存！</p>
-
-      <form onsubmit="handleCustomCardSubmit(event)" class="space-y-3.5 text-xs">
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">1. 選擇適用難度階梯：</label>
-          <select id="modal-card-level" class="w-full p-2.5 border border-gray-300 rounded-xl font-bold focus:border-amber-500 focus:outline-none bg-gray-50">
-            <option value="1">🌱 初階（一、二年級）</option>
-            <option value="2">🌿 進階（三、四年級）</option>
-            <option value="3">🌳 挑戰（五、六年級）</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">2. 選擇要素類別：</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-2 p-2 rounded-xl border border-amber-200 bg-amber-50/60 cursor-pointer font-bold text-amber-900">
-              <input type="radio" name="modal-card-type" value="time" checked class="accent-amber-600"> ⏰ 時間要素
-            </label>
-            <label class="flex items-center gap-2 p-2 rounded-xl border border-sky-200 bg-sky-50/60 cursor-pointer font-bold text-sky-900">
-              <input type="radio" name="modal-card-type" value="person" class="accent-sky-600"> 👤 人物要素
-            </label>
-            <label class="flex items-center gap-2 p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 cursor-pointer font-bold text-emerald-900">
-              <input type="radio" name="modal-card-type" value="location" class="accent-emerald-600"> 📍 地點要素
-            </label>
-            <label class="flex items-center gap-2 p-2 rounded-xl border border-pink-200 bg-pink-50/60 cursor-pointer font-bold text-pink-900">
-              <input type="radio" name="modal-card-type" value="event" class="accent-pink-600"> ⚡ 事件要素
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">3. 輸入卡片詞彙/短語：</label>
-          <input type="text" id="modal-card-text" required placeholder="例如：太陽剛升起的清晨、熱心的警衛伯伯..." class="w-full p-2.5 border border-gray-300 rounded-xl font-bold text-sm focus:border-amber-500 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">4. 出處 / 創作者（選填）：</label>
-          <input type="text" id="modal-card-source" placeholder="例如：王老師提供、301小明自創、補充教材..." class="w-full p-2 border border-gray-300 rounded-xl font-medium focus:border-amber-500 focus:outline-none">
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
-          <button type="button" onclick="toggleCustomCardModal(false)" class="px-4 py-2 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all">
-            取消
-          </button>
-          <button type="submit" class="px-5 py-2 rounded-xl font-black bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all flex items-center gap-1">
-            ➕ 立即加入卡池
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Header Section -->
-  <header class="bg-amber-100/80 border-b border-amber-200 sticky top-0 z-40 backdrop-blur-md shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+  <!-- Top Header & Navigation -->
+  <header class="bg-white/95 backdrop-blur sticky top-0 z-40 border-b border-amber-100 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
       
-      <!-- App Title -->
+      <!-- App Title & Subtitle -->
       <div class="flex items-center gap-3">
         <span class="text-3xl select-none">🎒</span>
         <div>
@@ -171,29 +90,42 @@
         </div>
       </div>
 
-      <!-- Main Navigation Tabs -->
-      <nav class="flex items-center gap-1.5 bg-amber-50/90 p-1.5 rounded-full border border-amber-200 flex-wrap justify-center">
-        <button id="nav-btn-quiz" onclick="switchTab('quiz')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition-all bg-amber-500 text-white shadow-sm">
-          🧩 完整句小達人
+      <!-- Main Navigation Tabs & Teacher Padlet Setting Entry -->
+      <div class="flex items-center gap-2 flex-wrap justify-center">
+        <nav class="flex items-center gap-1.5 bg-amber-50/90 p-1.5 rounded-full border border-amber-200 flex-wrap justify-center">
+          <button id="nav-btn-quiz" onclick="switchTab('quiz')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition-all bg-amber-500 text-white shadow-sm">
+            🧩 完整句小達人
+          </button>
+          <button id="nav-btn-workbench" onclick="switchTab('workbench')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
+            ✍️ 造句抽卡池
+          </button>
+          <button id="nav-btn-gallery" onclick="switchTab('gallery')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
+            🏆 全班彙整牆 (<span id="gallery-count-badge">0</span>)
+          </button>
+          <button id="nav-btn-analytics" onclick="switchTab('analytics')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
+            📊 卡池檢視與自訂
+          </button>
+        </nav>
+
+        <!-- Teacher Setup Padlet Button -->
+        <button onclick="togglePadletModal(true)" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 px-3.5 py-1.5 rounded-full text-xs font-black transition-all flex items-center gap-1 shadow-sm">
+          <span>📌</span> 設定班級 Padlet
         </button>
-        <button id="nav-btn-workbench" onclick="switchTab('workbench')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
-          ✍️ 造句抽卡池
+
+        <!-- Cloud Sync Setting Button -->
+        <button onclick="toggleCloudConfigModal(true)" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 px-3 py-1.5 rounded-full text-xs font-black transition-all flex items-center gap-1 shadow-sm">
+          <span id="cloud-status-icon">☁️</span> <span id="cloud-status-text">雲端共享卡池</span>
         </button>
-        <button id="nav-btn-gallery" onclick="switchTab('gallery')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
-          🏆 全班彙整牆 (<span id="gallery-count-badge">0</span>)
-        </button>
-        <button id="nav-btn-analytics" onclick="switchTab('analytics')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
-          📊 卡池檢視與自訂
-        </button>
-      </nav>
+      </div>
+
     </div>
   </header>
 
   <!-- Main Content Container -->
-  <main class="max-w-7xl mx-auto px-4 py-6 w-full flex-1">
+  <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 space-y-6">
 
     <!-- ========================================== -->
-    <!-- TAB 1: 完整句小達人 (Quiz Mode) -->
+    <!-- TAB 1: 完整句小達人 (Quiz Mode)             -->
     <!-- ========================================== -->
     <section id="tab-quiz" class="space-y-6">
       <div class="bg-white rounded-2xl p-6 shadow-sm border border-purple-100 space-y-4">
@@ -202,7 +134,7 @@
             <h2 class="text-lg font-bold text-purple-950 flex items-center gap-2">
               <span>🧩</span> 完整句要素診斷挑戰
             </h2>
-            <p class="text-xs text-gray-500 mt-0.5">💡 <strong>完整句觀念診斷：</strong>觀察下面的句子「少了什麼」？從下方選項選出最合適的卡牌填入，讓句子變得通順又完整！</p>
+            <p class="text-xs text-gray-500 mt-0.5">💡 <strong>完整句觀念診斷：</strong>觀察下面的真實課文句子「少了什麼」？從下方選項選出最合適的卡牌填入，讓句子變得通順又完整！</p>
           </div>
           <button onclick="generateQuizQuestion()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-sm">
             🎲 換一題挑戰
@@ -217,15 +149,15 @@
           </div>
 
           <div id="quiz-sentence-display" class="text-lg md:text-2xl font-black text-gray-800 py-3 flex flex-wrap items-center justify-center gap-2 leading-relaxed">
-            <span class="text-gray-400">載入中...</span>
+            <span class="text-gray-400">題目載入中...</span>
           </div>
 
-          <!-- 漸進式提示按鈕（預設不破梗，讓學生自主覺察） -->
+          <!-- Foldable Hint Container -->
           <div class="flex flex-col items-center justify-center gap-2">
             <button id="quiz-hint-toggle-btn" onclick="toggleQuizHint()" class="text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 px-3.5 py-1.5 rounded-full transition-all border border-purple-300 flex items-center gap-1 shadow-sm">
               <span>💡</span> 需要提示嗎？（點我看缺了什麼要素）
             </button>
-            <div id="quiz-hint-content" class="hidden text-xs font-extrabold text-amber-900 bg-amber-100/90 border border-amber-300 px-3 py-1 rounded-lg animate-in fade-in duration-150">
+            <div id="quiz-hint-content" class="hidden text-xs font-extrabold text-amber-900 bg-amber-100/90 border border-amber-300 px-3 py-1 rounded-lg">
               💡 提示：這個句子目前缺少的是【<span id="quiz-target-type">???</span>】喔！
             </div>
           </div>
@@ -237,7 +169,7 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- TAB 2: 造句抽卡池 (Workbench) -->
+    <!-- TAB 2: 造句抽卡池 (Workbench)               -->
     <!-- ========================================== -->
     <section id="tab-workbench" class="hidden space-y-6">
       
@@ -313,11 +245,11 @@
         </button>
       </div>
 
-      <!-- Four Element Card Slots (Pure Vocabulary View + Individual Clear Buttons) -->
+      <!-- Four Element Card Slots -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <!-- Slot: Time -->
-        <div id="slot-time" class="bg-white rounded-2xl p-5 border-2 border-dashed border-amber-300 flex flex-col justify-between min-h-[230px] shadow-sm transition-all relative">
+        <div id="slot-time" class="bg-white rounded-2xl p-5 border-2 border-dashed border-amber-300 flex flex-col justify-between min-h-[230px] shadow-sm slot-transition relative">
           <div class="flex justify-between items-center text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg">
             <span>⏰ 時間要素 <span id="badge-time-count" class="text-amber-600 font-extrabold">(共0張)</span></span>
             <span class="card-meta text-gray-400">自由創作</span>
@@ -336,7 +268,7 @@
         </div>
 
         <!-- Slot: Person -->
-        <div id="slot-person" class="bg-white rounded-2xl p-5 border-2 border-dashed border-sky-300 flex flex-col justify-between min-h-[230px] shadow-sm transition-all relative">
+        <div id="slot-person" class="bg-white rounded-2xl p-5 border-2 border-dashed border-sky-300 flex flex-col justify-between min-h-[230px] shadow-sm slot-transition relative">
           <div class="flex justify-between items-center text-xs font-bold text-sky-800 bg-sky-50 px-2.5 py-1 rounded-lg">
             <span>👤 人物要素 <span id="badge-person-count" class="text-sky-600 font-extrabold">(共0張)</span></span>
             <span class="card-meta text-gray-400">自由創作</span>
@@ -355,7 +287,7 @@
         </div>
 
         <!-- Slot: Location -->
-        <div id="slot-location" class="bg-white rounded-2xl p-5 border-2 border-dashed border-emerald-300 flex flex-col justify-between min-h-[230px] shadow-sm transition-all relative">
+        <div id="slot-location" class="bg-white rounded-2xl p-5 border-2 border-dashed border-emerald-300 flex flex-col justify-between min-h-[230px] shadow-sm slot-transition relative">
           <div class="flex justify-between items-center text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg">
             <span>📍 地點要素 <span id="badge-location-count" class="text-emerald-600 font-extrabold">(共0張)</span></span>
             <span class="card-meta text-gray-400">自由創作</span>
@@ -374,7 +306,7 @@
         </div>
 
         <!-- Slot: Event -->
-        <div id="slot-event" class="bg-white rounded-2xl p-5 border-2 border-dashed border-pink-300 flex flex-col justify-between min-h-[230px] shadow-sm transition-all relative">
+        <div id="slot-event" class="bg-white rounded-2xl p-5 border-2 border-dashed border-pink-300 flex flex-col justify-between min-h-[230px] shadow-sm slot-transition relative">
           <div class="flex justify-between items-center text-xs font-bold text-pink-800 bg-pink-50 px-2.5 py-1 rounded-lg">
             <span>⚡ 事件要素 <span id="badge-event-count" class="text-pink-600 font-extrabold">(共0張)</span></span>
             <span class="card-meta text-gray-400">自由創作</span>
@@ -426,10 +358,17 @@
 
           <!-- Canvas Action Buttons -->
           <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="submitToClassGallery()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black px-5 py-2 rounded-xl text-xs md:text-sm shadow-md transition-all flex items-center gap-1 transform hover:-translate-y-0.5">
-              🚀 繳交造句到全班彙整牆
+            
+            <!-- Dynamic Padlet Submission Button -->
+            <button id="btn-submit-padlet" onclick="submitAndGoToPadlet()" class="bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-black px-4 py-2 rounded-xl text-xs md:text-sm shadow-md transition-all flex items-center gap-1.5 transform hover:-translate-y-0.5">
+              <span>📌</span> 複製並前往 Padlet 繳交
             </button>
-            <button onclick="speakStudentText()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3.5 py-2 rounded-xl text-xs border border-indigo-200 transition-all flex items-center gap-1">
+
+            <button onclick="submitToClassGallery()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1">
+              🚀 存至本機成果牆
+            </button>
+
+            <button onclick="speakStudentText()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-2 rounded-xl text-xs border border-indigo-200 transition-all flex items-center gap-1">
               🔊 朗讀
             </button>
             <button onclick="copyStudentText()" class="bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold px-3 py-2 rounded-xl text-xs border border-gray-200 transition-all">
@@ -481,27 +420,20 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- TAB 3: 全班彙整牆 (Class Gallery) -->
+    <!-- TAB 3: 全班彙整牆 (Class Gallery)           -->
     <!-- ========================================== -->
     <section id="tab-gallery" class="hidden space-y-6">
       <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 space-y-5">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 border-b border-emerald-100 pb-4">
           <div>
             <h2 class="text-xl font-black text-emerald-950 flex items-center gap-2">
-              <span>🏆</span> 全校 / 班級造句成果彙整牆
+              <span>🏆</span> 本機班級造句成果牆
             </h2>
-            <p class="text-xs text-gray-500 mt-1">學生作品即時彙整在此，支援依照難度階梯篩選檢視、按讚互動與一鍵匯出班級作品！</p>
+            <p class="text-xs text-gray-500 mt-1">此處記錄本裝置已繳交的作品，支援即時按讚、朗讀與一鍵匯出 Excel / 列印成 PDF！</p>
           </div>
           
           <!-- Gallery Export Toolbar -->
           <div class="flex items-center gap-2 flex-wrap">
-            <select id="gallery-level-filter" onchange="renderGallery()" class="bg-emerald-50 text-emerald-900 border border-emerald-300 font-bold text-xs rounded-xl px-3 py-2 focus:outline-none">
-              <option value="ALL">全部難度作品</option>
-              <option value="初階（一、二年級）">初階（一、二年級）</option>
-              <option value="進階（三、四年級）">進階（三、四年級）</option>
-              <option value="挑戰（五、六年級）">挑戰（五、六年級）</option>
-            </select>
-
             <button onclick="exportGalleryToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all shadow-sm flex items-center gap-1.5">
               <span>📊</span> 下載成果 (Excel)
             </button>
@@ -518,21 +450,19 @@
         </div>
 
         <!-- Submissions Grid -->
-        <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- Dynamic Submission Cards -->
-        </div>
+        <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
         <!-- Empty Gallery Prompt -->
         <div id="gallery-empty-state" class="text-center py-12 text-gray-400 space-y-2">
           <div class="text-4xl">📝</div>
-          <div class="font-bold text-sm">目前尚無符合條件的學生作品喔！</div>
-          <div class="text-xs">請回到「✍️ 造句工作台」寫下句子並點擊「🚀 繳交造句到全班彙整牆」。</div>
+          <div class="font-bold text-sm">目前尚無本機作品喔！</div>
+          <div class="text-xs">學生亦可直接點擊「📌 複製並前往 Padlet 繳交」上傳至全班 Padlet 發表牆。</div>
         </div>
       </div>
     </section>
 
     <!-- ========================================== -->
-    <!-- TAB 4: 卡池檢視與自訂卡片 (Analytics & Custom Cards) -->
+    <!-- TAB 4: 卡池檢視與自訂卡片 (Analytics)        -->
     <!-- ========================================== -->
     <section id="tab-analytics" class="hidden space-y-6">
       
@@ -540,19 +470,13 @@
       <div class="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 p-5 rounded-2xl border-2 border-amber-300/80 shadow-sm space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <h3 class="text-base font-black text-amber-950 flex items-center gap-2">
-            <span>✨</span> 師生即時自訂卡片專區
+            <span>✨</span> 師生即時自訂卡片專區（支援全台雲端共享）
           </h3>
-          <span class="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full">💡 新增後將持久儲存於瀏覽器中</span>
+          <span class="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full">💡 新增後將同步上傳至 Google 雲端試算表與本機</span>
         </div>
-        <p class="text-xs text-gray-600">在此直接輸入您想補充的卡牌，可單獨指定難度與類別，並且可在下方卡清單中直接刪除或管理！</p>
+        <p class="text-xs text-gray-600">在此直接輸入您想補充的卡牌，系統會自動儲存至本機，若已連線雲端試算表更會自動同步給所有班級！</p>
         
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-1">
-          <select id="inline-card-level" class="p-2 border border-amber-300 rounded-xl text-xs font-bold bg-white focus:outline-none">
-            <option value="1">🌱 初階（一、二年級）</option>
-            <option value="2">🌿 進階（三、四年級）</option>
-            <option value="3">🌳 挑戰（五、六年級）</option>
-          </select>
-
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
           <select id="inline-card-type" class="p-2 border border-amber-300 rounded-xl text-xs font-bold bg-white focus:outline-none">
             <option value="time">⏰ 時間要素</option>
             <option value="person">👤 人物要素</option>
@@ -561,10 +485,10 @@
           </select>
 
           <input type="text" id="inline-card-text" placeholder="卡片詞彙（如：雨過天晴時）" class="p-2 border border-amber-300 rounded-xl text-xs font-bold bg-white focus:outline-none">
-          <input type="text" id="inline-card-source" placeholder="出處/創作者（如：師生自訂）" class="p-2 border border-amber-300 rounded-xl text-xs font-bold bg-white focus:outline-none">
+          <input type="text" id="inline-card-source" placeholder="出處/創作者（如：301班小明）" class="p-2 border border-amber-300 rounded-xl text-xs font-bold bg-white focus:outline-none">
 
           <button onclick="submitInlineCustomCard()" class="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-2 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1">
-            ➕ 快速新增卡片
+            ➕ 快速新增並同步
           </button>
         </div>
       </div>
@@ -574,7 +498,7 @@
         <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between">
           <div>
             <h3 class="text-base font-bold text-gray-800 mb-1 flex items-center gap-2 text-center justify-center">
-              <span class="text-amber-500">📊</span> <span id="analytics-chart-title">初階題庫卡池比例</span>
+              <span class="text-amber-500">📊</span> <span id="analytics-chart-title">題庫卡池比例</span>
             </h3>
             <p class="text-xs text-gray-500 mb-4 text-center">【時間、人物、地點、事件】四大類別詞彙張數分佈</p>
           </div>
@@ -587,13 +511,13 @@
       <!-- Card Pool Content Browser -->
       <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 space-y-4">
         <div class="flex justify-between items-center border-b border-gray-100 pb-3 flex-wrap gap-2">
-          <h3 class="text-base font-bold text-gray-800">📋 <span id="list-level-title">初階（一、二年級）</span> 純卡片詞彙清單與管理</h3>
+          <h3 class="text-base font-bold text-gray-800">📋 純卡片詞彙清單與管理</h3>
           <div class="flex items-center gap-2 flex-wrap">
             <button onclick="purgeInvalidCards()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold px-3 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1 shadow-sm">
               🧹 自動清理非詞彙卡片
             </button>
             <button onclick="exportCurrentPoolToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1 shadow-sm">
-              📥 匯出當前階梯卡池 (Excel)
+              📥 匯出當前卡池 (Excel)
             </button>
           </div>
         </div>
@@ -621,1057 +545,1073 @@
 
   </main>
 
+  <!-- Modal: Teacher Padlet Configuration -->
+  <div id="padlet-config-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-rose-100">
+      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+        <h3 class="text-base font-black text-rose-950 flex items-center gap-2">
+          <span>📌</span> 設定班級專屬 Padlet 發表牆
+        </h3>
+        <button onclick="togglePadletModal(false)" class="text-gray-400 hover:text-gray-600 font-black text-base">✕</button>
+      </div>
+
+      <div class="text-xs text-gray-600 space-y-2 leading-relaxed">
+        <p>老師可以在此輸入您的 <strong>Padlet 發表牆網址</strong>，系統會自動將它綁定至專屬連結中。您將連結（或 QR Code）派給學生後，學生造句完點擊繳交按鈕，就會<strong>自動複製造句並直達您的 Padlet</strong>！</p>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <div>
+          <label class="block font-bold text-gray-700 text-xs mb-1">老師的 Padlet 看板網址：</label>
+          <input type="url" id="teacher-padlet-input" placeholder="https://padlet.com/yourname/..." class="w-full p-2.5 border border-rose-300 rounded-xl text-xs font-mono font-bold focus:border-rose-500 focus:outline-none bg-rose-50/30">
+        </div>
+
+        <button onclick="generateCustomShareLink()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black text-xs py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-1">
+          🔗 生成我的專屬派課網址與 QR Code
+        </button>
+
+        <!-- Result Box -->
+        <div id="share-link-result-box" class="hidden p-3 bg-rose-50 rounded-2xl border border-rose-200 space-y-2.5">
+          <div>
+            <span class="text-[11px] font-bold text-rose-800">專屬派課網址（複製給學生）：</span>
+            <div class="flex gap-1.5 mt-1">
+              <input type="text" id="generated-share-link" readonly class="flex-1 p-2 bg-white border border-rose-300 rounded-lg text-[11px] font-mono select-all text-gray-700">
+              <button onclick="copyGeneratedShareLink()" class="bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold">複製</button>
+            </div>
+          </div>
+
+          <div class="text-center pt-1">
+            <span class="text-[11px] font-bold text-rose-800 block mb-1.5">或投影 QR Code 給學生掃描：</span>
+            <div id="qrcode-container" class="inline-block p-2 bg-white rounded-xl border border-rose-200 shadow-sm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+        <button type="button" onclick="togglePadletModal(false)" class="px-4 py-2 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs transition-all">
+          完成關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cloud Sync Configuration -->
+  <div id="cloud-config-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-blue-100">
+      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+        <h3 class="text-base font-black text-blue-950 flex items-center gap-2">
+          <span>☁️</span> 設定 Google 試算表雲端共享卡池
+        </h3>
+        <button onclick="toggleCloudConfigModal(false)" class="text-gray-400 hover:text-gray-600 font-black text-base">✕</button>
+      </div>
+
+      <div class="text-xs text-gray-600 space-y-2 leading-relaxed">
+        <p>管理者只要將 Google Apps Script 發布的「網頁應用程式網址（結尾為 /exec）」貼在下方，任何小朋友或老師新增的卡片都會<strong>自動上傳到您的試算表，並且全台使用者打開網頁都會自動讀取累積！</strong></p>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <div>
+          <label class="block font-bold text-gray-700 text-xs mb-1">Google Apps Script Web App 網址：</label>
+          <input type="url" id="cloud-gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full p-2.5 border border-blue-300 rounded-xl text-xs font-mono font-bold focus:border-blue-500 focus:outline-none bg-blue-50/30">
+        </div>
+
+        <div class="flex gap-2">
+          <button onclick="saveCloudConfig()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-1">
+            💾 儲存並立即連線同步
+          </button>
+          <button onclick="fetchCloudCards(true)" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-3 py-2.5 rounded-xl transition-all">
+            🔄 重整卡池
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+        <button type="button" onclick="toggleCloudConfigModal(false)" class="px-4 py-2 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs transition-all">
+          完成關閉
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Custom Card Creation -->
+  <div id="custom-card-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-amber-100">
+      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+        <h3 class="text-base font-black text-amber-950 flex items-center gap-2">
+          <span>✨</span> 師生新增自訂卡片
+        </h3>
+        <button onclick="toggleCustomCardModal(false)" class="text-gray-400 hover:text-gray-600 font-black text-base">✕</button>
+      </div>
+
+      <p class="text-xs text-gray-500">老師與學生可以輸入自訂詞彙，新增後會立即放入抽卡池中，並自動儲存！</p>
+
+      <form onsubmit="handleCustomCardSubmit(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">1. 選擇要素類別：</label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2 rounded-xl border border-amber-200 bg-amber-50/60 cursor-pointer font-bold text-amber-900">
+              <input type="radio" name="modal-card-type" value="time" checked class="accent-amber-600"> ⏰ 時間要素
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl border border-sky-200 bg-sky-50/60 cursor-pointer font-bold text-sky-900">
+              <input type="radio" name="modal-card-type" value="person" class="accent-sky-600"> 👤 人物要素
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 cursor-pointer font-bold text-emerald-900">
+              <input type="radio" name="modal-card-type" value="location" class="accent-emerald-600"> 📍 地點要素
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-xl border border-pink-200 bg-pink-50/60 cursor-pointer font-bold text-pink-900">
+              <input type="radio" name="modal-card-type" value="event" class="accent-pink-600"> ⚡ 事件要素
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">2. 輸入卡片詞彙/短語：</label>
+          <input type="text" id="modal-card-text" required placeholder="例如：太陽剛升起的清晨、熱心的警衛伯伯..." class="w-full p-2.5 border border-gray-300 rounded-xl font-bold text-sm focus:border-amber-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">3. 出處 / 創作者（選填）：</label>
+          <input type="text" id="modal-card-source" placeholder="例如：王老師提供、301小明自創、補充教材..." class="w-full p-2 border border-gray-300 rounded-xl font-medium focus:border-amber-500 focus:outline-none">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+          <button type="button" onclick="toggleCustomCardModal(false)" class="px-4 py-2 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all">
+            取消
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-xl font-black bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all flex items-center gap-1">
+            ➕ 立即加入卡池
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
   <!-- Footer Section -->
-  <footer class="bg-amber-100/50 border-t border-amber-200 text-center py-4 text-xs text-amber-900/70 font-semibold mt-8">
-    <p>國小國語造句訓練互動平台｜ Created By yilin shishi</p>
+  <footer class="bg-white border-t border-amber-100 py-6 text-center text-xs text-amber-900/60">
+    <div class="max-w-6xl mx-auto px-4 space-y-1">
+      <p>國小國語造句訓練互動平台｜ Created By yilin shishi</p>
+      <p class="text-[11px] text-gray-400">國小記敘文四要素：時間 ✕ 人物 ✕ 地點 ✕ 事件 靈感啟發教學系統</p>
+    </div>
   </footer>
 
-  <!-- JavaScript Application Logic -->
   <script>
-    // Text Sanitizer: Clean card string
-    function cleanCardText(text) {
-      if (!text) return "";
-      let str = String(text).trim();
-      str = str.replace(/^(卡片|編號|序號|No\.?|#)?\s*\d+[\.\-\s\_]*/i, '');
-      str = str.replace(/^[，。！？；、\s]+|[，。！？；、\s]+$/g, '');
-      str = str.replace(/，/g, ' '); 
-      return str.trim();
-    }
+    // ============================================================
+    // 1. 全域資料庫與 415 筆卡牌嵌入資料 (人物 106, 時間 105, 地點 102, 事件 102)
+    // ============================================================
+    const RAW_CARDS_PERSON = [
+      '弟弟和妹妹', '張奶奶', '小鴨子', '班長', '長頸鹿斑斑', '小草', '太陽公公', '雷公公', 
+      '妹妹', '爸爸', '松鼠', '公雞', '小青蛙', '火雞與孔雀', '爺爺', '姐姐', '小雨滴', 
+      '蜻蜓與蜜蜂', '小豬和羊', '恐龍', '子陽', '樂樂', '小青蛙', '小燕子', '風阿姨', 
+      '船家', '軍人媽媽', '建築師爸爸', '神筆馬良', '貪心的國王', '黑面琵鷺黑皮', 
+      '格列佛（巨人）', '小人國的小兵', '農夫', '小鼴鼠', '大樹爺爺', '北風與太陽', 
+      '小水滴', '郵差叔叔', '愛迪生', '小松鼠', '老山羊', '小螢火蟲', '企鵝爸爸', 
+      '綠衣郵差', '花仙子', '勤勞的蜜蜂', '勇敢的小獵犬', '慈祥的奶奶', '小蜘蛛', 
+      '馬良', '貪心的大官', '法布爾', '老農夫', '許願樹下的少年', '熱心的志工', 
+      '小金魚', '聰明的烏鴉', '領頭的雁鳥', '安徒生', '獨木橋上的羊', '守信用的朋友', 
+      '森林保護員', '孔子', '開朗的轉學生', '默契十足的隊友', '默默耕耘的農夫', '馬偕', 
+      '海倫·凱勒', '江秀真', '巧文姐姐', '老鞋匠', '小精靈', '愛麗絲', '兔子先生', 
+      '窮和尚', '富和尚', '達悟勇士', '駱駝', '小玉', '孫悟空', '如來佛', '萊特兄弟', 
+      '李白', '柯錦鋒', '沈芯菱', '王羲之', '凱瑟琳', '齊柏林', '米勒', '路得', 
+      '馬拉拉', '比爾·蓋茲', '貝克漢', '陳念琴', '達駭黑熊', '魯賓遜', '邱吉爾', 
+      '黃美廉', '艾森豪', '晏子', '齊景公', '愛因斯坦', '李家豪', '王恩', '陳郁如', 
+      '林凱羚', '蘇軾', '胡利肯', '古祖馬茲', '普羅米修斯', '神農氏', '楊元慶', 
+      '藺相如', '廉頗', '滿詠萱修女', '馬照琪', '政彬', '名揚', '朱柏廬', '嚴長壽', 
+      '方仲永', '諸葛亮(孔明)', '司馬懿', '居禮夫人', '安妮', '戴安娜', '芥川龍之介', 
+      '泰戈爾', '黃仕傑', '溫士凱', '盧彥勳', '阿姆斯壯', '布萊恩', '曹操', '周瑜', 
+      '黃蓋', '許芳宜', '布大爺', '敘里奧'
+    ];
 
-    // Strict Chinese Card Validator
-    function isValidCardText(text) {
-      if (!text) return false;
-      let str = String(text).trim();
-      if (str.length === 0) return false;
-      if (/^\d+$/.test(str) || /^\d{4}-\d{2}-\d{2}/.test(str)) return false;
+    const RAW_CARDS_TIME = [
+      '早上', '一大早', '下雨的晚上', '冬天過後', '春天到了', '放學過後', '一下子', 
+      '太陽一下山', '快過年了', '星期日', '過了很久', '太陽出來時', '下課的時候', 
+      '一覺醒來', '五月三日', '很久以前', '雨過天晴後', '午覺過後', '突然間', 
+      '下午放學時', '開學第一天', '清晨之際', '涼爽秋天', '一眨眼', '傍晚時分', 
+      '週末假期', '許久之後', '每年冬天', '冬至時節', '溫暖春季', '炎熱中午', 
+      '到了第七天', '月亮升起時', '世界地球日', '課間十分鐘', '深夜時刻', 
+      '雷雨交加之際', '很久很久以前', '大晴天', '臨睡前', '下課鐘聲響起', '夕陽西下', 
+      '半夜', '暑假期間', '黎明拂曉', '光陰似箭', '幾分鐘過後', '童年時光', '正當此時', 
+      '世紀之交', '清晨', '黃昏', '半夜三更', '陽光燦爛的午後', '春秋時期', '寒來暑往', 
+      '轉眼間', '日月如梭', '剎那間', '夜深人靜', '歲末年終', '頃刻之間', '課間休息', 
+      '迎彩霞的拂曉', '光芒萬丈的旦夕', '金秋時節', '春暖花開之際', '風和日麗的早晨', 
+      '放學後', '三月', '第二天早上', '當……就……', '春去秋來', '深夜', '破曉時刻', 
+      '一會兒', '元宵節前一天', '傍晚', '四月二十三日', '久而久之', '曾幾何時', 
+      '瞬間', '千百年來', '中秋節', '夏夜晚風', '終年', '日月星辰', '西元二〇一八年六月', 
+      '三十秒', '四十七歲那年', '莫拉克颱風期間', '日暮', '明年春天', '秋夜', 
+      '小米收成後', '天未亮', '十九歲那年', '西元一六五九年', '春秋時代', '三月二十二日', 
+      '四十歲那年', '每一千年', '北宋', '西元一九九二年', '遠古年代', '冬夜', 
+      '上古時代', '少年時', '西元1928年', '西元2001年', '戰國時代', '每年七月十二日', 
+      '二〇二四年夏天', '民國四十年代', '三天之內', '清晨大霧時', '二〇一六年', '初夏', 
+      '歲末', '薄暮', '雨季', '頃刻', '一會兒工夫', '黎明', '昔日', '當下', '光陰', 
+      '日積月累', '寒冬', '千鈞一髮', '重陽日', '永恆', '歲月', '一時片刻', '夜以繼日', 
+      '彈指之間', '良辰吉日'
+    ];
 
-      if (
-        str.includes("版本") || str.includes("語彙庫") || str.includes("統計") ||
-        str.includes("自動生成") || str.includes("stamp") || str.includes("卡牌總數") ||
-        str.includes("收錄") || str.includes("課文之重點") || str.includes("詞性結構") ||
-        str.includes("難易度") || str.includes("例句") || str.includes("標示") ||
-        str.includes("重點『") || str.includes("詞彙庫") || str.includes("目錄") ||
-        str.includes("架構") || str.includes("單元說明") || str.includes("解析")
-      ) {
-        return false;
+    const RAW_CARDS_LOCATION = [
+      '在草地上', '在花園裡', '在林間', '在冰涼的海水裡', '在山坡上', '在水井裡', 
+      '在池塘邊', '在大門後', '在樹上', '在田裡', '在桌子上', '在高高的天空上', 
+      '在校園裡', '在城堡裡', '在教室裡', '在窗戶上', '在山谷裡', '在泥土裡', 
+      '在彩虹下方', '在操場上', '二年級教室', '學校操場', '熱鬧的夜市', '翠綠的山坡', 
+      '越南水鄉', '建築工地', '金黃色的稻田', '曾文溪口濕地', '新埔小鎮', '小人國的海灘', 
+      '泥土深處', '溫暖的河口', '極地冰屋', '神仙住的山洞', '廣闊的大海', '社區圖書館', 
+      '古老的木橋', '茂密的樹林', '安靜的小巷', '月光河畔', '溫馨的客廳', '海中小島', 
+      '學校的公布欄', '繁華的城市', '神奇的畫冊裡', '山頂觀景臺', '校園綠蔭大道', 
+      '微風吹拂的花園', '遠方的城堡', '溫暖的家', '蔚藍的大海', '繁華的街市', 
+      '幽靜的山谷', '萬里長城', '圖書館的一角', '農夫的菜園', '童話王國', '清澈見底的小溪', 
+      '崇山峻嶺', '綠意盎然的森林', '廣袤無垠的草原', '熱鬧非凡的操場', '密不透風的樹林', 
+      '矗立山頭的燈塔', '古色古香的街角', '充滿歡笑的教室', '波濤澎湃的海面', 
+      '花香四溢的花園', '寬敞明亮的大廳', '游泳池', '臺灣', '加拿大', '淡水', 
+      '珠穆朗瑪峰', '泰國', '荷蘭', '普羅旺斯高原', '鹿港老街', '半邊井', 
+      '宜蘭傳藝園區', '嘉明湖', '水社壩堰堤公園', '南海', '火焰山', '成功大學力行校區', 
+      '四川', '井底', '東海', '五指山下', '非洲', '花蓮縣玉里鎮', '臺灣南部平原', 
+      '法國農村', '北宋針鋪門前', '迪士尼動畫工作室', '吉卜力工作室', '巴基斯坦小村落', 
+      '聯合國大會', '巴黎奧運賽場', '山林獵寮', '荒島／無人島', '英國約克夏', 
+      '齊國朝廷公堂', '醫院急診室', '古生物修復室', '故宮特展展廳', '錄音室', 
+      '廬山／西林寺', '亨德孫島', '馬里亞納海溝', '國立海洋生物博物館', '奧林帕斯山', 
+      '嘉義聖心教養院', '秦始皇陵墓', '曼德勒山', '不丹', '曹車水寨', '鵝鑾鼻燈塔', 
+      '七星潭／清水斷崖', '緬甸', '馬丘比丘', '秘魯', '佛萊堡', '西城縣', 
+      '基隆廟口', '彰化北斗', '馬達加斯加', '拉努瑪法納國家公園', '綠屋', '埃及', 
+      '不來梅', '太魯閣', '七家灣溪', '赤壁', '萬華', '思源埡口', '獵寮', '王功海邊', 
+      '鳳凰樹下', '月球', '加迪斯', '臺南市美術館'
+    ];
+
+    const RAW_CARDS_EVENT = [
+      '一邊擦汗，一邊澆花', '開心的跳進池塘', '急急忙忙進教室', '哈哈大笑', 
+      '悄悄把頭縮回去', '忙著採果子', '拍著肚子說大話', '滿臉笑容的上鏡頭', 
+      '高興的大叫好喔好喔', '一邊看書，一邊聽音樂', '急急忙忙透進水溝', '恭敬的向對方鞠躬', 
+      '照著鏡子大叫起來', '歡快的搖搖尾巴', '安安靜靜寫作業', '倒過來貼春聯', 
+      '帶著氣球向前跑', '頂著太陽勤勞工作', '興高采烈的堆山洞', '認真的向老師發問', 
+      '熱情地打招呼', '展翅高飛', '傳遞溫暖信件', '齊心協力划船', '辛苦操練保家衛國', 
+      '用心設計宏偉建築', '用神筆幫助貧民', '跨越千里飛來過冬', '親手搓湯圓團圓', 
+      '小人國小兵緊綁巨人', '努力穴居築巢', '大樹張傘遮陽擋雨', '太陽用熱力使人脫衣', 
+      '小水滴蒸發聚集成雲', '主動承認錯誤道歉', '細心照顧受傷小鳥', '認真聽講做筆記', 
+      '歡樂地圍繞螢火跳舞', '大聲重述精彩故事', '細心晒乾金黃柿餅', '合力抬起重物', 
+      '揮動魔杖變出花朵', '頂著大太陽揮汗耕作', '在草叢間提燈點亮夜空', '開心地分享玩具', 
+      '勇敢地面對挑戰', '細心織出一張漂亮的網', '頂著寒風傳遞快遞信件', '快樂地在海邊堆沙堡', 
+      '靜靜地仰望美麗星空', '熱烈地討論學習計畫', '感謝大地賜予豐收', '齊心協力築巢', 
+      '勤奮不懈學習', '化險為夷', '同心協力', '百折不撓', '刻苦耐勞', '精益求精', 
+      '迎難而上', '手舞足蹈', '默默耕耘', '興高采烈', '異口同聲', '驚慌失措', 
+      '循循善誘', '水滴石穿', '挺身而出', '歡天喜地', '無微不至', '腳踏實地', 
+      '集思廣益', '游出大海一般的壯志', '一掃而空', '空心進籃', '奉獻一生', 
+      '克服失明與失聰', '登頂珠穆朗瑪峰', '動手製作壽司', '翻山越嶺', '發明飛機', 
+      '憑缽杖前往南海求經', '舉辦飛魚季', '蛻變成美麗的蝴蝶', '踏上尋夢之旅', 
+      '大鬧天宮', '暗中畫上最後一片葉子', '用一公斤攜帶垃圾下山', '洗筆染黑池水', 
+      '暗中縫製精美新鞋', '乘著風的翅膀飛躍海洋', '連夜拿著鋤頭開圳引水', '募集蚊帳拯救生命', 
+      '高空俯瞰空拍臺灣', '創作《拾穗》描繪農民', '研發設計經典商標', '發展3D電腦動畫技術', 
+      '為女孩爭取受教育權', '克服病痛三度挑戰奧運', '救護小黑熊並唱歌送別', '荒島搭建木屋自給自足', 
+      '幽默機智化解名片尷尬', '巧用三條死罪開導國君', '發現自己長處發揮優勢', '急診室救護與時間賽跑', 
+      '清修化石解開古生物密碼', '突破黑洞創作少年奇幻小說', '負荊請罪與言歸於好', '條列好處推廣桌遊互動', 
+      '奉獻一生照顧重殘兒童', '發起「捐一頂蚊帳」活動', '發揮敏銳觀察提出大陸漂移說', '設計芭比娃娃開創玩具產業', 
+      '草船借箭神機妙算', '臨危救人並互相原諒', '贈送藍色連身裙改變社區', '出手救治刺傷的旗魚王', 
+      '縣官巧審石頭抓偷錢賊', '普羅米修斯冒險盜取天火', '神農氏親嘗百草記錄藥性', '演講突破限時為弱勢發聲', 
+      '發揮創意用溜溜球創世界紀錄', '接力賽決勝', '拱手讓人', '未雨綢繆', '臨渴掘井', 
+      '揠苗助長', '狐假虎威', '大開城門', '氣定神閒', '故布疑陣', '拆開禮物', 
+      '誤飲葡萄酒', '扔橘子送行', '換草鞋行路', '火燒連環船', '割捨南瓜', '對號入座', 
+      '深夜抄訂單', '踏上月球漫步', '擊石生火', '闢建生態社區', '登臺越級挑戰', 
+      '王戎辨苦李', '楊氏之子巧答', '不來梅樂隊擊退強盜'
+    ];
+
+    // Master Textbook Sentences for Quiz Diagnosis Mode
+    const MASTER_SENTENCES = [
+      {
+        source: "1上 第01課《這是誰的》",
+        time: "太陽剛升起的一大早", person: "長頸鹿斑斑", location: "在綠油油的草地上", event: "開心的跳進池塘",
+        template: (t, p, l, e) => `${t}，${p}${l}${e}。`
+      },
+      {
+        source: "1上 第02課《小草》",
+        time: "春天到了", person: "小草", location: "在泥土裡", event: "悄悄把頭縮回去",
+        template: (t, p, l, e) => `${t}，${p}${l}${e}。`
+      },
+      {
+        source: "1下 第09課《花園裡》",
+        time: "放學過後", person: "弟弟和妹妹", location: "在花園裡", event: "一邊擦汗，一邊澆花",
+        template: (t, p, l, e) => `${t}，${p}${l}${e}。`
+      },
+      {
+        source: "2上 第04課《小松鼠》",
+        time: "午覺過後", person: "松鼠", location: "在樹上", event: "忙著採果子",
+        template: (t, p, l, e) => `${t}，${p}${l}${e}。`
+      },
+      {
+        source: "2下 第06課《下課十分鐘》",
+        time: "下課的時候", person: "班長", location: "學校操場", event: "帶著氣球向前跑",
+        template: (t, p, l, e) => `${t}，${p}在${l}${e}。`
+      },
+      {
+        source: "3上 第05課《綠衣天使》",
+        time: "清晨之際", person: "綠衣郵差", location: "安靜的小巷", event: "傳遞溫暖信件",
+        template: (t, p, l, e) => `${t}，${p}穿梭在${l}中，${e}。`
+      },
+      {
+        source: "3下 第08課《捏陶師傅》",
+        time: "雨過天晴後", person: "神筆馬良", location: "熱鬧的夜市", event: "用神筆幫助貧民",
+        template: (t, p, l, e) => `${t}，${p}來到${l}，${e}。`
+      },
+      {
+        source: "4上 第02課《大自然之歌》",
+        time: "黎明拂曉", person: "小燕子", location: "金黃色的稻田", event: "展翅高飛",
+        template: (t, p, l, e) => `${t}，${p}從${l}上空${e}。`
+      },
+      {
+        source: "5上 第04課《夢想的翅膀》",
+        time: "陽光燦爛的午後", person: "萊特兄弟", location: "小人國的海灘", event: "發明飛機",
+        template: (t, p, l, e) => `${t}，${p}在${l}上${e}。`
+      },
+      {
+        source: "5下 第11課《守護海洋》",
+        time: "光陰似箭", person: "齊柏林", location: "臺灣", event: "高空俯瞰空拍臺灣",
+        template: (t, p, l, e) => `${t}，${p}在${l}上空${e}。`
+      },
+      {
+        source: "6上 第07課《赤壁風雲》",
+        time: "深夜三更", person: "諸葛亮(孔明)", location: "赤壁", event: "草船借箭神機妙算",
+        template: (t, p, l, e) => `${t}，${p}在${l}${e}。`
+      },
+      {
+        source: "6下 第03課《太空漫遊》",
+        time: "世紀之交", person: "阿姆斯壯", location: "月球", event: "踏上月球漫步",
+        template: (t, p, l, e) => `${t}，${p}登上${l}，${e}。`
       }
+    ];
 
-      const hasChinese = /[\u4e00-\u9fa5]/.test(str);
-      if (!hasChinese) return false;
+    const CUSTOM_CARDS_STORAGE_KEY = "mandarin_custom_cards_v3";
+    const CLASS_GALLERY_STORAGE_KEY = "mandarin_gallery_v3";
+    const TEACHER_PADLET_STORAGE_KEY = "mandarin_padlet_url_v3";
+    const CLOUD_GAS_URL_STORAGE_KEY = "mandarin_cloud_gas_url_v3";
 
-      const invalidKeywords = [
-        "序號", "編號", "卡號", "卡片編號", "統計小結", "統計", "小結", "小計", "總計", "合計",
-        "要素", "類別", "時間", "人物", "地點", "事件", "出處", "課次", "年級", "階梯", "難度", 
-        "名稱", "卡牌", "內容", "詞語", "標題", "摘要", "總結", "版本", "語彙庫", "自動生成",
-        "例句", "詞性", "結構", "標示", "重點", "說明"
-      ];
-      
-      if (invalidKeywords.some(k => str === k || str === `適用${k}` || str === `${k}類別` || str.includes("統計小結") || str.includes("卡片編號") || str.includes("語彙庫"))) {
-        return false;
-      }
+    // 預設的雲端試算表 Web App 網址（若您有固定網址可直接填入雙引號內）
+    let cloudGasUrl = "";
 
-      if (str.length > 45) return false;
-      return true;
-    }
-
-    // Default Database containing fully embedded word bank from user images
-    const DEFAULT_TIER_DATABASE = {
-      1: {
-        name: "精選課文資料庫",
-        desc: "涵蓋一至六年級精選完整課文詞庫與示範句",
-        sentences: [
-          {
-            fullText: "一大早，長頸鹿斑斑在花園裡開心的跳進池塘。",
-            time: "一大早", person: "長頸鹿斑斑", location: "在花園裡", event: "開心的跳進池塘",
-            source: "經典課文原句"
-          },
-          {
-            fullText: "放學過後，弟弟和妹妹在學校操場熱情地打招呼。",
-            time: "放學過後", person: "弟弟和妹妹", location: "學校操場", event: "熱情地打招呼",
-            source: "經典課文原句"
-          },
-          {
-            fullText: "春天到了，小青蛙在池塘邊高興的大叫好喔好喔。",
-            time: "春天到了", person: "小青蛙", location: "在池塘邊", event: "高興的大叫好喔好喔",
-            source: "經典課文原句"
-          },
-          {
-            fullText: "清晨之際，神筆馬良在建築工地用神筆幫助貧民。",
-            time: "清晨之際", person: "神筆馬良", location: "建築工地", event: "用神筆幫助貧民",
-            source: "經典課文原句"
-          },
-          {
-            fullText: "滿天星斗的夏夜，綠衣郵差在月光河畔頂著寒風傳遞快捷信件。",
-            time: "夏夜晚風", person: "綠衣郵差", location: "月光河畔", event: "頂著寒風傳遞快捷信件",
-            source: "經典課文原句"
-          },
-          {
-            fullText: "當夕陽西下時，歷經滄桑的守燈塔老人矗立在山頭的燈塔旁默默守護林地。",
-            time: "夕陽西下", person: "老農夫", location: "矗立山頭的燈塔", event: "默默耕耘",
-            source: "經典課文原句"
-          }
-        ],
-        pools: {
-          person: [
-            { text: "弟弟和妹妹" }, { text: "張奶奶" }, { text: "小鴨子" }, { text: "班長" },
-            { text: "長頸鹿斑斑" }, { text: "小草" }, { text: "太陽公公" }, { text: "雷公公" },
-            { text: "妹妹" }, { text: "爸爸" }, { text: "松鼠" }, { text: "公雞" },
-            { text: "小青蛙" }, { text: "火雞與孔雀" }, { text: "爺爺" }, { text: "姐姐" },
-            { text: "小雨滴" }, { text: "蜻蜓與蜜蜂" }, { text: "小豬和羊" }, { text: "恐龍" },
-            { text: "子陽" }, { text: "樂樂" }, { text: "小青蛙" }, { text: "小燕子" },
-            { text: "風阿姨" }, { text: "船家" }, { text: "軍人媽媽" }, { text: "建築師爸爸" },
-            { text: "神筆馬良" }, { text: "貪心的國王" }, { text: "黑面琵鷺黑皮" }, { text: "格列佛（巨人）" },
-            { text: "小人國的小兵" }, { text: "農夫" }, { text: "小鼴鼠" }, { text: "大樹爺爺" },
-            { text: "北風與太陽" }, { text: "小水滴" }, { text: "郵差叔叔" }, { text: "愛迪生" },
-            { text: "小松鼠" }, { text: "老山羊" }, { text: "小螢火蟲" }, { text: "企鵝爸爸" },
-            { text: "綠衣郵差" }, { text: "花仙子" }, { text: "勤勞的蜜蜂" }, { text: "勇敢的小獵犬" },
-            { text: "慈祥的奶奶" }, { text: "小蜘蛛" }, { text: "馬良" }, { text: "貪心的大官" },
-            { text: "法布爾" }, { text: "老農夫" }, { text: "許願樹下的少年" }, { text: "熱心的志工" },
-            { text: "小金魚" }, { text: "聰明的烏鴉" }, { text: "領頭的雁鳥" }, { text: "安徒生" },
-            { text: "獨木橋上的羊" }, { text: "守信用的朋友" }, { text: "森林保護員" }, { text: "孔子" },
-            { text: "開朗的轉學生" }, { text: "默契十足的隊友" }, { text: "默默耕耘的農夫" }, { text: "馬偕" },
-            { text: "海倫·凱勒" }, { text: "江秀真" }, { text: "巧文姐姐" }, { text: "老鞋匠" },
-            { text: "小精靈" }, { text: "愛麗絲" }, { text: "兔子先生" }, { text: "窮和尚" },
-            { text: "富和尚" }, { text: "達悟勇士" }, { text: "駱駝" }, { text: "小玉" },
-            { text: "孫悟空" }, { text: "如來佛" }, { text: "萊特兄弟" }, { text: "李白" },
-            { text: "柯錦鋒" }, { text: "沈芯菱" }, { text: "王羲之" }, { text: "凱瑟琳" },
-            { text: "齊柏林" }, { text: "米勒" }, { text: "路得" }, { text: "馬拉拉" },
-            { text: "比爾·蓋茲" }, { text: "貝克漢" }, { text: "陳念琴" }, { text: "達駭黑熊" },
-            { text: "魯賓遜" }, { text: "邱吉爾" }, { text: "黃美廉" }, { text: "艾森豪" },
-            { text: "晏子" }, { text: "齊景公" }, { text: "愛因斯坦" }, { text: "李家豪" },
-            { text: "王恩" }, { text: "陳郁如" }, { text: "林凱羚" }, { text: "蘇軾" },
-            { text: "胡利肯" }, { text: "古祖馬茲" }, { text: "普羅米修斯" }, { text: "神農氏" },
-            { text: "楊元慶" }, { text: "藺相如" }, { text: "廉頗" }, { text: "滿詠萱修女" },
-            { text: "馬照琪" }, { text: "政彬" }, { text: "名揚" }, { text: "朱柏廬" },
-            { text: "嚴長壽" }, { text: "方仲永" }, { text: "諸葛亮 (孔明)" }, { text: "司馬懿" },
-            { text: "居禮夫人" }, { text: "安妮" }, { text: "戴安娜" }, { text: "芥川龍之介" },
-            { text: "泰戈爾" }, { text: "黃仕傑" }, { text: "溫士凱" }, { text: "盧彥勳" },
-            { text: "阿姆斯壯" }, { text: "布萊恩" }, { text: "曹操" }, { text: "周瑜" },
-            { text: "黃蓋" }, { text: "許芳宜" }, { text: "布大爺" }, { text: "敘里奧" }
-          ],
-          time: [
-            { text: "早上" }, { text: "一大早" }, { text: "下雨的晚上" }, { text: "冬天過後" },
-            { text: "春天到了" }, { text: "放學過後" }, { text: "一下子" }, { text: "太陽一下山" },
-            { text: "快過年了" }, { text: "星期日" }, { text: "過了很久" }, { text: "太陽出來時" },
-            { text: "下課的時候" }, { text: "一覺醒來" }, { text: "五月三日" }, { text: "很久以前" },
-            { text: "雨過天晴後" }, { text: "午覺過後" }, { text: "突然間" }, { text: "下午放學時" },
-            { text: "開學第一天" }, { text: "清晨之際" }, { text: "涼爽秋天" }, { text: "一眨眼" },
-            { text: "傍晚時分" }, { text: "週末假期" }, { text: "許久之後" }, { text: "每年冬天" },
-            { text: "冬至時節" }, { text: "溫暖春季" }, { text: "炎熱中午" }, { text: "到了第七天" },
-            { text: "月亮升起時" }, { text: "世界地球日" }, { text: "課間十分鐘" }, { text: "深夜時刻" },
-            { text: "雷雨交加之際" }, { text: "很久很久以前" }, { text: "大晴天" }, { text: "臨睡前" },
-            { text: "下課鐘聲響起" }, { text: "夕陽西下" }, { text: "半夜" }, { text: "暑假期間" },
-            { text: "黎明拂曉" }, { text: "光陰似箭" }, { text: "幾分鐘過後" }, { text: "童年時光" },
-            { text: "正當此時" }, { text: "世紀之交" }, { text: "清晨" }, { text: "黃昏" },
-            { text: "半夜三更" }, { text: "很久很久以前" }, { text: "陽光燦爛的午後" }, { text: "春秋時期" },
-            { text: "寒來暑往" }, { text: "轉眼間" }, { text: "日月如梭" }, { text: "剎那間" },
-            { text: "夜深人靜" }, { text: "歲末年終" }, { text: "頃刻之間" }, { text: "課間休息" },
-            { text: "迎彩霞的拂曉" }, { text: "光芒萬丈的旦夕" }, { text: "金秋時節" }, { text: "春暖花開之際" },
-            { text: "風和日麗的早晨" }, { text: "放學後" }, { text: "三月" }, { text: "第二天早上" },
-            { text: "春去秋來" }, { text: "深夜" }, { text: "破曉時刻" }, { text: "一會兒" },
-            { text: "元宵節前一天" }, { text: "傍晚" }, { text: "四月二十三日" }, { text: "久而久之" },
-            { text: "曾幾何時" }, { text: "瞬間" }, { text: "千百年來" }, { text: "中秋節" },
-            { text: "夏夜晚風" }, { text: "終年" }, { text: "轉瞬之間" }, { text: "日月星辰" },
-            { text: "西元二〇一八年六月" }, { text: "三十秒" }, { text: "四十七歲那年" }, { text: "莫拉克颱風期間" },
-            { text: "日暮" }, { text: "明年春天" }, { text: "秋夜" }, { text: "小米收成後" },
-            { text: "天未亮" }, { text: "十九歲那年" }, { text: "西元一六五九年" }, { text: "春秋時代" },
-            { text: "三月二十二日" }, { text: "四十歲那年" }, { text: "每一千年" }, { text: "北宋" },
-            { text: "西元一九九二年" }, { text: "遠古年代" }, { text: "冬夜" }, { text: "上古時代" },
-            { text: "少年時" }, { text: "西元1928年" }, { text: "西元2001年" }, { text: "戰國時代" },
-            { text: "每年七月十二日" }, { text: "二〇二四年夏天" }, { text: "民國四十年代" }, { text: "三天之內" },
-            { text: "清晨大霧時" }, { text: "二〇一六年" }, { text: "初夏" }, { text: "歲末" },
-            { text: "薄暮" }, { text: "雨季" }, { text: "頃刻" }, { text: "轉瞬間" },
-            { text: "一會兒工夫" }, { text: "黎明" }, { text: "昔日" }, { text: "當下" },
-            { text: "光陰" }, { text: "日積月累" }, { text: "寒冬" }, { text: "千鈞一髮" },
-            { text: "重陽日" }, { text: "永恆" }, { text: "歲月" }, { text: "一時片刻" },
-            { text: "夜以繼日" }, { text: "彈指之間" }, { text: "良辰吉日" }
-          ],
-          location: [
-            { text: "在草地上" }, { text: "在花園裡" }, { text: "在林間" }, { text: "在冰涼的海水裡" },
-            { text: "在山坡上" }, { text: "在水井裡" }, { text: "在池塘邊" }, { text: "在大門後" },
-            { text: "在樹上" }, { text: "在田裡" }, { text: "在桌子上" }, { text: "在高高的天空上" },
-            { text: "在校園裡" }, { text: "在城堡裡" }, { text: "在教室裡" }, { text: "在窗戶上" },
-            { text: "在山谷裡" }, { text: "在泥土裡" }, { text: "在彩虹下方" }, { text: "在操場上" },
-            { text: "二年級教室" }, { text: "學校操場" }, { text: "熱鬧的夜市" }, { text: "翠綠的山坡" },
-            { text: "越南水鄉" }, { text: "建築工地" }, { text: "金黃色的稻田" }, { text: "曾文溪口濕地" },
-            { text: "新埔小鎮" }, { text: "小人國的海灘" }, { text: "泥土深處" }, { text: "溫暖的河口" },
-            { text: "極地冰屋" }, { text: "神仙住的山洞" }, { text: "廣闊的大海" }, { text: "社區圖書館" },
-            { text: "古老的木橋" }, { text: "茂密的樹林" }, { text: "安靜的小巷" }, { text: "月光河畔" },
-            { text: "溫馨的客廳" }, { text: "海中小島" }, { text: "學校的公布欄" }, { text: "繁華的城市" },
-            { text: "神奇的畫冊裡" }, { text: "山頂觀景臺" }, { text: "校園綠蔭大道" }, { text: "微風吹拂的花園" },
-            { text: "遠方的城堡" }, { text: "溫暖的家" }, { text: "蔚藍的大海" }, { text: "繁華的街市" },
-            { text: "幽靜的山谷" }, { text: "萬里長城" }, { text: "圖書館的一角" }, { text: "農夫的菜園" },
-            { text: "童話王國" }, { text: "清澈見底的小溪" }, { text: "崇山峻嶺" }, { text: "綠意盎然的森林" },
-            { text: "廣袤無垠的草原" }, { text: "熱鬧非凡的操場" }, { text: "密不透風的樹林" }, { text: "矗立山頭的燈塔" },
-            { text: "古色古香的街角" }, { text: "充滿歡笑的教室" }, { text: "波濤澎湃的海面" }, { text: "花香四溢的花園" },
-            { text: "寬敞明亮的大廳" }, { text: "游泳池" }, { text: "臺灣" }, { text: "加拿大" },
-            { text: "淡水" }, { text: "珠穆朗瑪峰" }, { text: "泰國" }, { text: "荷蘭" },
-            { text: "普羅旺斯高原" }, { text: "鹿港老街" }, { text: "半邊井" }, { text: "宜蘭傳藝園區" },
-            { text: "嘉明湖" }, { text: "水社壩堰堤公園" }, { text: "南海" }, { text: "火焰山" },
-            { text: "成功大學力行校區" }, { text: "四川" }, { text: "井底" }, { text: "東海" },
-            { text: "五指山下" }, { text: "非洲" }, { text: "花蓮縣玉里鎮" }, { text: "臺灣南部平原" },
-            { text: "法國農村" }, { text: "北宋針鋪門前" }, { text: "迪士尼動畫工作室" }, { text: "吉卜力工作室" },
-            { text: "巴基斯坦小村落" }, { text: "聯合國大會" }, { text: "巴黎奧運賽場" }, { text: "山林獵寮" },
-            { text: "荒島 / 無人島" }, { text: "英國約克夏" }, { text: "齊國朝廷公堂" }, { text: "醫院急診室" },
-            { text: "古生物修復室" }, { text: "故宮特展展廳" }, { text: "錄音室" }, { text: "廬山 / 西林寺" },
-            { text: "亨德遜島" }, { text: "馬里亞納海溝" }, { text: "國立海洋生物博物館" }, { text: "奧林帕斯山" },
-            { text: "嘉義聖心教養院" }, { text: "秦始皇陵墓" }, { text: "愛德勒山" }, { text: "不丹" },
-            { text: "曹軍水寨" }, { text: "鵝鑾鼻燈塔" }, { text: "七星潭 / 清水斷崖" }, { text: "緬甸" },
-            { text: "馬丘比丘" }, { text: "秘魯" }, { text: "佛萊堡" }, { text: "西城縣" },
-            { text: "基隆廟口" }, { text: "彰化北斗" }, { text: "馬達加斯加" }, { text: "拉努瑪法納國家公園" },
-            { text: "綠屋" }, { text: "埃及" }, { text: "不來梅" }, { text: "太魯閣" },
-            { text: "七家灣溪" }, { text: "赤壁" }, { text: "萬華" }, { text: "思源埡口" },
-            { text: "獵寮" }, { text: "王功海邊" }, { text: "鳳凰樹下" }, { text: "月球" },
-            { text: "加迪斯" }, { text: "臺南市美術館" }
-          ],
-          event: [
-            { text: "一邊擦汗，一邊澆花" }, { text: "開心的跳進池塘" }, { text: "急急忙忙進教室" }, { text: "哈哈大笑" },
-            { text: "悄悄把頭縮回去" }, { text: "忙著採果子" }, { text: "拍著肚子說大話" }, { text: "滿臉笑容的上鏡頭" },
-            { text: "高興的大叫好喔好喔" }, { text: "一邊看書，一邊聽音樂" }, { text: "急急忙忙透進水溝" }, { text: "恭敬的向對方鞠躬" },
-            { text: "照著鏡子大叫起來" }, { text: "歡快的搖搖尾巴" }, { text: "安安靜靜寫作業" }, { text: "倒過來貼春聯" },
-            { text: "帶著氣球向前跑" }, { text: "頂著太陽勤勞工作" }, { text: "興高采烈的堆山洞" }, { text: "認真的向老師發問" },
-            { text: "熱情地打招呼" }, { text: "展翅高飛" }, { text: "傳遞溫暖信件" }, { text: "齊心協力划船" },
-            { text: "辛苦操練保家衛國" }, { text: "用心設計宏偉建築" }, { text: "用神筆幫助貧民" }, { text: "跨越千里飛來過冬" },
-            { text: "親手搓湯圓團圓" }, { text: "小人國小兵緊綁巨人" }, { text: "努力穴居築巢" }, { text: "大樹張傘遮陽擋雨" },
-            { text: "太陽用熱力使人脫衣" }, { text: "小水滴蒸發聚集成雲" }, { text: "主動承認錯誤道歉" }, { text: "細心照顧受傷小鳥" },
-            { text: "認真聽講做筆記" }, { text: "歡樂地圍繞螢火跳舞" }, { text: "大聲重述精彩故事" }, { text: "細心晒乾金黃柿餅" },
-            { text: "合力抬起重物" }, { text: "揮動魔杖變出花朵" }, { text: "頂著大太陽揮汗耕作" }, { text: "在草叢間提燈點亮夜空" },
-            { text: "開心地分享玩具" }, { text: "勇敢地面對挑戰" }, { text: "細心織出一張漂亮的網" }, { text: "頂著寒風傳遞快捷信件" },
-            { text: "快樂地在海邊堆沙堡" }, { text: "靜靜地仰望美麗星空" }, { text: "熱烈地討論學習計畫" }, { text: "感謝大地賜予豐收" },
-            { text: "齊心協力築巢" }, { text: "勤奮不懈學習" }, { text: "化險為夷" }, { text: "同心協力" },
-            { text: "百折不撓" }, { text: "刻苦耐勞" }, { text: "精益求精" }, { text: "迎難而上" },
-            { text: "手舞足蹈" }, { text: "默默耕耘" }, { text: "興高采烈" }, { text: "異口同聲" },
-            { text: "驚慌失措" }, { text: "循循善誘" }, { text: "水滴石穿" }, { text: "挺身而出" },
-            { text: "歡天喜地" }, { text: "無微不至" }, { text: "腳踏實地" }, { text: "集思廣益" },
-            { text: "游出大海一般的壯志" }, { text: "一掃而空" }, { text: "空心進籃" }, { text: "奉獻一生" },
-            { text: "克服失明與失聰" }, { text: "登頂珠穆朗瑪峰" }, { text: "動手製作壽司" }, { text: "翻山越嶺" },
-            { text: "發明飛機" }, { text: "憑缽杖前往南海求經" }, { text: "舉辦飛魚季" }, { text: "蛻變成美麗的蝴蝶" },
-            { text: "踏上尋夢之旅" }, { text: "大鬧天宮" }, { text: "暗中畫上最後一片葉子" }, { text: "用一公斤攜帶垃圾下山" },
-            { text: "洗筆染黑池水" }, { text: "暗中縫製精美新鞋" }, { text: "乘著風的翅膀飛躍海洋" }, { text: "連夜拿著鋤頭開圳引水" },
-            { text: "募集蚊帳拯救生命" }, { text: "高空俯瞰空拍臺灣" }, { text: "創作《拾穗》描繪農民" }, { text: "研發設計經典商標" },
-            { text: "發展3D電腦動畫技術" }, { text: "為女孩爭取受教育權" }, { text: "克服病痛三度挑戰奧運" }, { text: "救護小黑熊並唱歌送別" },
-            { text: "荒島搭建木屋自給自足" }, { text: "幽默機智化解名片尷尬" }, { text: "巧用三條死罪開導國君" }, { text: "發現自己長處發揮優勢" },
-            { text: "急診室救護與時間賽跑" }, { text: "清修化石解開古生物密碼" }, { text: "突破黑洞創作少年奇幻小說" }, { text: "負荊請罪與言歸於好" },
-            { text: "條列好處推廣桌遊互動" }, { text: "奉獻一生照顧重殘兒童" }, { text: "發起「捐一頂蚊帳」活動" }, { text: "發揮敏銳觀察提出大陸漂移說" },
-            { text: "設計芭比娃娃開創玩具產業" }, { text: "草船借箭神機妙算" }, { text: "臨危救人並互相原諒" }, { text: "贈送藍色連身裙改變社區" },
-            { text: "出手救治刺傷的旗魚王" }, { text: "縣官巧審石頭抓偷錢賊" }, { text: "普羅米修斯冒險盜取天火" }, { text: "神農氏親嘗百草記錄藥性" },
-            { text: "演講突破限時為弱勢發聲" }, { text: "發揮創意用溜溜球創世界紀錄" }, { text: "接力賽決勝" }, { text: "拱手讓人" },
-            { text: "未雨綢繆" }, { text: "臨渴掘井" }, { text: "揠苗助長" }, { text: "狐假虎威" },
-            { text: "大開城門" }, { text: "氣定神閒" }, { text: "故布疑陣" }, { text: "拆開禮物" },
-            { text: "誤飲葡萄酒" }, { text: "扔橘子送行" }, { text: "換草鞋行路" }, { text: "火燒連環船" },
-            { text: "割捨南瓜" }, { text: "對號入座" }, { text: "深夜抄訂單" }, { text: "踏上月球漫步" },
-            { text: "擊石生火" }, { text: "闢建生態社區" }, { text: "登臺越級挑戰" }, { text: "王戎辨苦李" },
-            { text: "楊氏之子巧答" }, { text: "不來梅樂隊擊退強盜" }
-          ]
-        }
-      }
-    };
-
-    // Application State Variables
-    let gradeDatabase = JSON.parse(JSON.stringify(DEFAULT_TIER_DATABASE));
     let unifiedPool = { time: [], person: [], location: [], event: [] };
-    let masterSentences = [];
     let currentDraw = { time: null, person: null, location: null, event: null };
-    let classGallery = [];
+    let currentQuizData = null;
     let poolChartInstance = null;
-    const CUSTOM_CARDS_STORAGE_KEY = "custom_sentence_cards_v3";
+    let classGallery = [];
+    let teacherPadletUrl = "";
+    let qrcodeInstance = null;
 
-    // 🌟 初始化卡池：將完整題庫詞語導入全開放卡池中
+    // Helper: text cleaner
+    function cleanCardText(str) {
+      if (!str) return "";
+      return String(str).replace(/[\[\]]/g, '').trim();
+    }
+
+    // Initialize Card Pool
     function initUnifiedPool() {
-      unifiedPool = { time: [], person: [], location: [], event: [] };
-      masterSentences = [];
-      const seen = { time: new Set(), person: new Set(), location: new Set(), event: new Set() };
+      unifiedPool = {
+        person: RAW_CARDS_PERSON.map(text => ({ text, source: '課文' })),
+        time: RAW_CARDS_TIME.map(text => ({ text, source: '課文' })),
+        location: RAW_CARDS_LOCATION.map(text => ({ text, source: '課文' })),
+        event: RAW_CARDS_EVENT.map(text => ({ text, source: '課文' }))
+      };
 
-      const tier = DEFAULT_TIER_DATABASE[1];
-      if (tier) {
-        if (tier.sentences) {
-          masterSentences = masterSentences.concat(tier.sentences);
-        }
-        ['time', 'person', 'location', 'event'].forEach(type => {
-          (tier.pools[type] || []).forEach(card => {
-            const cleanedText = cleanCardText(card.text);
-            if (cleanedText && isValidCardText(cleanedText) && !seen[type].has(cleanedText)) {
-              seen[type].add(cleanedText);
-              unifiedPool[type].push({
-                text: cleanedText,
-                source: card.source || "精選課文詞庫"
+      // Load custom saved cards
+      try {
+        const saved = localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          ['time', 'person', 'location', 'event'].forEach(k => {
+            if (Array.isArray(parsed[k])) {
+              parsed[k].forEach(c => {
+                if (c && c.text) {
+                  unifiedPool[k].unshift({ text: c.text, source: c.source || '師生自訂', isCustom: true });
+                }
               });
             }
           });
-        });
-      }
-    }
-
-    // 取得當前卡池
-    function getCurrentPools() {
-      return unifiedPool;
-    }
-
-    // 取得所有示範句子
-    function getCurrentSentences() {
-      return masterSentences;
-    }
-
-    // Load custom cards from LocalStorage
-    function loadCustomCardsFromStorage() {
-      try {
-        const stored = localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY);
-        if (stored) {
-          const customList = JSON.parse(stored);
-          customList.forEach(item => {
-            if (unifiedPool[item.type]) {
-              const exists = unifiedPool[item.type].some(c => c.text === item.text);
-              if (!exists) {
-                unifiedPool[item.type].push({
-                  text: item.text,
-                  source: item.source || "師生自訂",
-                  isCustom: true
-                });
-              }
-            }
-          });
         }
-      } catch (e) {
-        console.warn("Unable to load custom cards from storage:", e);
+      } catch (err) {
+        console.error("讀取自訂卡片失敗", err);
       }
     }
 
-    // Save custom cards to LocalStorage
-    function saveCustomCardsToStorage() {
-      try {
-        const customItems = [];
-        ['time', 'person', 'location', 'event'].forEach(type => {
-          unifiedPool[type].forEach(card => {
-            if (card.isCustom) {
-              customItems.push({
-                type: type,
-                text: card.text,
-                source: card.source
-              });
-            }
-          });
-        });
-        localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(customItems));
-      } catch (e) {
-        console.warn("Unable to save custom cards to storage:", e);
-      }
-    }
-
-    // Tab Switcher
+    // Tab Navigation
     window.switchTab = function(tabName) {
       const tabs = ['quiz', 'workbench', 'gallery', 'analytics'];
-      tabs.forEach(tab => {
-        const sec = document.getElementById(`tab-${tab}`);
-        const btn = document.getElementById(`nav-btn-${tab}`);
-        if (sec) {
-          if (tab === tabName) {
-            sec.classList.remove('hidden');
-          } else {
-            sec.classList.add('hidden');
-          }
-        }
+      tabs.forEach(t => {
+        const sec = document.getElementById(`tab-${t}`);
+        const btn = document.getElementById(`nav-btn-${t}`);
+        if (sec) sec.classList.toggle('hidden', t !== tabName);
         if (btn) {
-          if (tab === tabName) {
-            btn.className = "px-4 py-1.5 rounded-full text-xs md:text-sm font-black transition-all bg-amber-500 text-white shadow-sm";
+          if (t === tabName) {
+            btn.className = "px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition-all bg-amber-500 text-white shadow-sm";
           } else {
             btn.className = "px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all";
           }
         }
       });
       if (tabName === 'analytics') {
-        setTimeout(() => updateCharts(), 50);
+        setTimeout(() => updateCharts(), 150);
       }
     };
 
-    // Custom Card Modal
-    window.toggleCustomCardModal = function(show) {
-      const modal = document.getElementById('custom-card-modal');
-      if (modal) {
-        if (show) modal.classList.remove('hidden');
-        else modal.classList.add('hidden');
+    // ============================================================
+    // 2. 完整句小達人 (Quiz Mode) 核心出題與判定
+    // ============================================================
+    const ELEMENT_NAMES = {
+      time: '時間',
+      person: '人物',
+      location: '地點',
+      event: '事件'
+    };
+
+    window.generateQuizQuestion = function() {
+      if (!MASTER_SENTENCES || MASTER_SENTENCES.length === 0) return;
+
+      const randomIdx = Math.floor(Math.random() * MASTER_SENTENCES.length);
+      const item = MASTER_SENTENCES[randomIdx];
+      const types = ['time', 'person', 'location', 'event'];
+      const targetType = types[Math.floor(Math.random() * types.length)];
+      const targetWord = item[targetType];
+
+      currentQuizData = {
+        item: item,
+        targetType: targetType,
+        targetWord: targetWord
+      };
+
+      // 課文出處
+      const sourceTag = document.getElementById('quiz-source-tag');
+      if (sourceTag) sourceTag.textContent = `課文原句出處：${item.source}`;
+
+      // 產生挖空句子
+      const displaySentence = item.template(
+        targetType === 'time' ? '<span class="quiz-blank-box">❓【少了什麼？】</span>' : item.time,
+        targetType === 'person' ? '<span class="quiz-blank-box">❓【少了什麼？】</span>' : item.person,
+        targetType === 'location' ? '<span class="quiz-blank-box">❓【少了什麼？】</span>' : item.location,
+        targetType === 'event' ? '<span class="quiz-blank-box">❓【少了什麼？】</span>' : item.event
+      );
+
+      const sentenceDisplay = document.getElementById('quiz-sentence-display');
+      if (sentenceDisplay) sentenceDisplay.innerHTML = displaySentence;
+
+      // 提示狀態重置為折疊
+      const hintContent = document.getElementById('quiz-hint-content');
+      const targetTypeSpan = document.getElementById('quiz-target-type');
+      if (hintContent) hintContent.classList.add('hidden');
+      if (targetTypeSpan) targetTypeSpan.textContent = ELEMENT_NAMES[targetType];
+
+      // 回饋區重置
+      const feedback = document.getElementById('quiz-feedback');
+      if (feedback) feedback.className = "hidden text-base font-extrabold py-2 px-4 rounded-xl";
+
+      // 產生 3 個選項：包含正確解答 + 跨要素干擾項
+      const options = [
+        { text: targetWord, type: targetType, isCorrect: true }
+      ];
+
+      // 從其他要素類別中抽取干擾項
+      const otherTypes = types.filter(t => t !== targetType);
+      while (options.length < 3 && otherTypes.length > 0) {
+        const randType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
+        const poolList = unifiedPool[randType] && unifiedPool[randType].length > 0 ? unifiedPool[randType] : [];
+        if (poolList.length > 0) {
+          const randCard = poolList[Math.floor(Math.random() * poolList.length)];
+          const cardWord = cleanCardText(randCard.text);
+          if (!options.some(o => o.text === cardWord)) {
+            options.push({ text: cardWord, type: randType, isCorrect: false });
+          }
+        } else {
+          break;
+        }
+      }
+
+      // 洗牌
+      options.sort(() => Math.random() - 0.5);
+
+      const grid = document.getElementById('quiz-options-grid');
+      if (grid) {
+        grid.innerHTML = options.map(opt => `
+          <button onclick="checkQuizAnswer('${opt.text.replace(/'/g, "\\'")}', '${targetWord.replace(/'/g, "\\'")}', '${targetType}', '${opt.type}')" class="p-3.5 rounded-2xl bg-white border-2 border-purple-200 hover:border-purple-500 hover:bg-purple-100/60 font-black text-sm text-purple-950 transition-all shadow-sm transform hover:-translate-y-0.5">
+            ${opt.text}
+          </button>
+        `).join('');
       }
     };
 
-    window.handleCustomCardSubmit = function(e) {
-      e.preventDefault();
-      const typeRadio = document.querySelector('input[name="modal-card-type"]:checked');
-      const type = typeRadio ? typeRadio.value : 'time';
-      const text = document.getElementById('modal-card-text').value;
-      const source = document.getElementById('modal-card-source').value || "師生自訂";
-      if (addCustomCardToDatabase(type, text, source)) {
-        document.getElementById('modal-card-text').value = '';
-        document.getElementById('modal-card-source').value = '';
-        toggleCustomCardModal(false);
-      }
+    window.toggleQuizHint = function() {
+      const hintContent = document.getElementById('quiz-hint-content');
+      if (hintContent) hintContent.classList.toggle('hidden');
     };
 
-    window.submitInlineCustomCard = function() {
-      const type = document.getElementById('inline-card-type').value;
-      const text = document.getElementById('inline-card-text').value;
-      const source = document.getElementById('inline-card-source').value || "師生自訂";
-      if (addCustomCardToDatabase(type, text, source)) {
-        document.getElementById('inline-card-text').value = '';
-        document.getElementById('inline-card-source').value = '';
-      }
-    };
+    window.checkQuizAnswer = function(chosenWord, targetWord, targetType, chosenType) {
+      const feedback = document.getElementById('quiz-feedback');
+      if (!feedback) return;
 
-    // Initialization
-    window.addEventListener('DOMContentLoaded', () => {
-      initUnifiedPool();
-      loadCustomCardsFromStorage();
-      internalPurgeAllInvalid();
-      initCharts();
-      renderGallery();
-      clearAllCards(false);
-      renderCardLists();
-      generateQuizQuestion();
-      switchTab('quiz'); 
-    });
-
-    // Core Custom Card Adder
-    function addCustomCardToDatabase(...args) {
-      let type, rawText, source;
-      if (args.length >= 4) {
-        type = args[1];
-        rawText = args[2];
-        source = args[3];
+      feedback.classList.remove('hidden');
+      if (chosenWord === targetWord) {
+        feedback.className = "text-base font-extrabold py-2.5 px-4 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300";
+        feedback.innerHTML = `🎉 太棒了！答對了！「${chosenWord}」正是填補【${ELEMENT_NAMES[targetType]}】的最完整卡片！`;
       } else {
-        type = args[0];
-        rawText = args[1];
-        source = args[2];
+        feedback.className = "text-base font-extrabold py-2.5 px-4 rounded-xl bg-rose-100 text-rose-900 border border-rose-300";
+        feedback.innerHTML = `💡 再想一想喔！您選擇的「${chosenWord}」屬於【${ELEMENT_NAMES[chosenType]}】，但這個句子缺少的是【${ELEMENT_NAMES[targetType]}】喔！`;
       }
+    };
 
-      const cleaned = cleanCardText(rawText);
-      if (!isValidCardText(cleaned)) {
-        showToast("⚠️ 輸入的卡片詞彙不符合要求（請勿輸入純數字或說明文字）。", "error");
-        return false;
-      }
-
+    // ============================================================
+    // 3. 造句抽卡池 (Workbench) 抽卡、留白與槽位渲染
+    // ============================================================
+    window.drawCard = function(type) {
       const pool = unifiedPool[type];
-      if (!pool) return false;
-      const exists = pool.some(c => c.text === cleaned);
-      if (exists) {
-        showToast("⚠️ 該卡片詞彙已經存在於卡池中囉！", "info");
-        return false;
+      if (!pool || pool.length === 0) {
+        showToast(`目前【${ELEMENT_NAMES[type] || type}】卡池沒有可用卡片！`, "info");
+        return;
       }
+      const randomCard = pool[Math.floor(Math.random() * pool.length)];
+      currentDraw[type] = randomCard;
+      renderSlot(type);
+      updateCombinedSentence();
+      showToast(`已抽取【${ELEMENT_NAMES[type] || type}】：${cleanCardText(randomCard.text)}`, "info");
+    };
 
-      const newCard = { text: cleaned, source: source, isCustom: true };
-      pool.push(newCard);
+    window.drawAll = function() {
+      ['time', 'person', 'location', 'event'].forEach(type => {
+        const pool = unifiedPool[type];
+        if (pool && pool.length > 0) {
+          currentDraw[type] = pool[Math.floor(Math.random() * pool.length)];
+        }
+      });
+      ['time', 'person', 'location', 'event'].forEach(type => renderSlot(type));
+      updateCombinedSentence();
+      showToast("🎲 成功一鍵抽取四要素卡牌！", "success");
+    };
 
-      saveCustomCardsToStorage();
-      renderCardLists();
-      updateCharts();
+    window.clearSingleCard = function(type) {
+      currentDraw[type] = null;
+      renderSlot(type);
+      updateCombinedSentence();
+      showToast(`已將【${ELEMENT_NAMES[type] || type}】歸零留白，可自由打字發揮！`, "info");
+    };
 
-      const typeNames = { time: '時間', person: '人物', location: '地點', event: '事件' };
-      showToast(`🎉 已成功新增${typeNames[type]}卡牌：「${cleaned}」！`, "success");
-      return true;
+    window.clearAllCards = function(showToastMsg = true) {
+      currentDraw = { time: null, person: null, location: null, event: null };
+      ['time', 'person', 'location', 'event'].forEach(type => renderSlot(type));
+      updateCombinedSentence();
+      if (showToastMsg) {
+        showToast("✨ 所有卡槽已重置留白，請開始自由造句！", "info");
+      }
+    };
+
+    function renderSlot(type) {
+      const slotEl = document.getElementById(`slot-${type}`);
+      if (!slotEl) return;
+
+      const card = currentDraw[type];
+      const wordEl = slotEl.querySelector('.card-word');
+      const metaEl = slotEl.querySelector('.card-meta');
+
+      if (card) {
+        if (wordEl) {
+          wordEl.textContent = cleanCardText(card.text);
+          wordEl.className = "card-word text-xl md:text-2xl font-black text-gray-900 leading-snug";
+        }
+        if (metaEl) {
+          metaEl.textContent = card.source || (card.isCustom ? '師生自訂' : '課文');
+          metaEl.className = "card-meta text-[11px] font-bold text-amber-700 bg-white px-1.5 py-0.5 rounded border border-amber-200";
+        }
+      } else {
+        if (wordEl) {
+          wordEl.textContent = "✨ 自由發揮（留白）";
+          wordEl.className = "card-word text-xl md:text-2xl font-black text-gray-400 leading-snug";
+        }
+        if (metaEl) {
+          metaEl.textContent = "自由創作";
+          metaEl.className = "card-meta text-gray-400 text-xs";
+        }
+      }
     }
 
-    // Delete Single Card from Pool
-    window.deleteSingleCardFromPool = function(...args) {
-      let type, text;
-      if (args.length >= 3) {
-        type = args[1];
-        text = args[2];
+    // Padlet Parameter & Modal Handling
+    function checkUrlForPadletParam() {
+      const params = new URLSearchParams(window.location.search);
+      const padlet = params.get('padlet');
+      if (padlet) {
+        teacherPadletUrl = decodeURIComponent(padlet);
+        localStorage.setItem(TEACHER_PADLET_STORAGE_KEY, teacherPadletUrl);
       } else {
-        type = args[0];
-        text = args[1];
+        const saved = localStorage.getItem(TEACHER_PADLET_STORAGE_KEY);
+        if (saved) teacherPadletUrl = saved;
       }
-      if (unifiedPool[type]) {
-        unifiedPool[type] = unifiedPool[type].filter(c => cleanCardText(c.text) !== cleanCardText(text));
+      const padletInput = document.getElementById('teacher-padlet-input');
+      if (padletInput && teacherPadletUrl) {
+        padletInput.value = teacherPadletUrl;
+      }
+      updatePadletButtonText();
+    }
+
+    function updatePadletButtonText() {
+      const btn = document.getElementById('btn-submit-padlet');
+      if (!btn) return;
+      if (teacherPadletUrl) {
+        btn.innerHTML = `<span>📌</span> 複製並前往 Padlet 繳交`;
+        btn.title = `將自動複製造句並跳轉至：${teacherPadletUrl}`;
+      } else {
+        btn.innerHTML = `<span>📌</span> 複製造句並前往 Padlet`;
+        btn.title = "點擊前可由右上角「設定班級 Padlet」設定專屬看板網址";
+      }
+    }
+
+    window.togglePadletModal = function(show) {
+      const modal = document.getElementById('padlet-config-modal');
+      if (modal) modal.classList.toggle('hidden', !show);
+      if (show) {
+        const padletInput = document.getElementById('teacher-padlet-input');
+        if (padletInput && teacherPadletUrl) {
+          padletInput.value = teacherPadletUrl;
+        }
+      }
+    };
+
+    window.generateCustomShareLink = function() {
+      const input = document.getElementById('teacher-padlet-input');
+      let url = input.value.trim();
+      if (!url) {
+        showToast("請輸入正確的 Padlet 網址！", "error");
+        return;
+      }
+      if (!/^https?:\/\//i.test(url)) {
+        url = "https://" + url;
+        input.value = url;
+      }
+      teacherPadletUrl = url;
+      localStorage.setItem(TEACHER_PADLET_STORAGE_KEY, url);
+      updatePadletButtonText();
+
+      const baseUrl = window.location.origin + window.location.pathname;
+      const shareUrl = `${baseUrl}?padlet=${encodeURIComponent(url)}`;
+      
+      const resBox = document.getElementById('share-link-result-box');
+      const shareInput = document.getElementById('generated-share-link');
+      if (resBox) resBox.classList.remove('hidden');
+      if (shareInput) shareInput.value = shareUrl;
+
+      // Render QR Code
+      const qrContainer = document.getElementById('qrcode-container');
+      if (qrContainer) {
+        qrContainer.innerHTML = "";
+        if (window.QRCode) {
+          qrcodeInstance = new QRCode(qrContainer, {
+            text: shareUrl,
+            width: 140,
+            height: 140,
+            colorDark: "#1E293B",
+            colorLight: "#FFFFFF",
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        }
+      }
+      showToast("專屬派課網址與 QR Code 生成完畢！", "success");
+    };
+
+    window.copyGeneratedShareLink = function() {
+      const input = document.getElementById('generated-share-link');
+      if (!input || !input.value) return;
+      navigator.clipboard.writeText(input.value).then(() => {
+        showToast("專屬派課網址已複製至剪貼簿！", "success");
+      }).catch(() => {
+        showToast("請手動選取網址進行複製！", "error");
+      });
+    };
+
+    // ============================================================
+    // 5. 自訂卡片與卡池檢視 (Analytics) & 雲端同步
+    // ============================================================
+    window.toggleCloudConfigModal = function(show) {
+      const modal = document.getElementById('cloud-config-modal');
+      if (modal) modal.classList.toggle('hidden', !show);
+      if (show) {
+        const input = document.getElementById('cloud-gas-url-input');
+        if (input) input.value = cloudGasUrl || localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY) || "";
+      }
+    };
+
+    window.saveCloudConfig = function() {
+      const input = document.getElementById('cloud-gas-url-input');
+      const url = input ? input.value.trim() : "";
+      cloudGasUrl = url;
+      localStorage.setItem(CLOUD_GAS_URL_STORAGE_KEY, url);
+      showToast("雲端試算表網址已儲存，正在連線同步...", "info");
+      toggleCloudConfigModal(false);
+      fetchCloudCards(true);
+    };
+
+    // 從 Google 試算表抓取跨班級累積的卡片
+    function fetchCloudCards(showToastMsg = false) {
+      const url = cloudGasUrl || localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY);
+      const statusIcon = document.getElementById('cloud-status-icon');
+      const statusText = document.getElementById('cloud-status-text');
+
+      if (!url) {
+        if (statusText) statusText.textContent = "未連線雲端";
+        return;
       }
 
-      saveCustomCardsToStorage();
-      renderCardLists();
+      if (statusIcon) statusIcon.textContent = "⏳";
+      if (statusText) statusText.textContent = "連線同步中...";
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.status === "success" && Array.isArray(data.cards)) {
+            let addedCount = 0;
+            data.cards.forEach(card => {
+              const type = card.type;
+              const text = cleanCardText(card.text);
+              if (unifiedPool[type]) {
+                const exists = unifiedPool[type].some(x => cleanCardText(x.text) === text);
+                if (!exists) {
+                  unifiedPool[type].unshift({
+                    text: text,
+                    source: card.source || "雲端共創",
+                    isCustom: true,
+                    isCloud: true
+                  });
+                  addedCount++;
+                }
+              }
+            });
+
+            if (statusIcon) statusIcon.textContent = "🟢";
+            if (statusText) statusText.textContent = `雲端已連線 (+${data.cards.length})`;
+            updateCharts();
+            renderCardLists();
+            if (showToastMsg) {
+              showToast(`🎉 成功同步！從雲端載入了 ${data.cards.length} 張跨校/跨班卡牌！`, "success");
+            }
+          }
+        })
+        .catch(err => {
+          console.warn("雲端試算表連線失敗或尚無網路", err);
+          if (statusIcon) statusIcon.textContent = "☁️";
+          if (statusText) statusText.textContent = "離線/本機模式";
+          if (showToastMsg) {
+            showToast("連線至雲端試算表失敗，請確認 Apps Script 部署權限為「所有人」。", "error");
+          }
+        });
+    }
+
+    // 將新自訂卡片非同步上傳至 Google 試算表
+    function pushCardToCloud(type, text, source) {
+      const url = cloudGasUrl || localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY);
+      if (!url) return;
+
+      const payload = {
+        type: type,
+        text: cleanCardText(text),
+        source: source || "師生共創"
+      };
+
+      fetch(url, {
+        method: "POST",
+        mode: "no-cors", // 避免瀏覽器 CORS 阻擋 GAS
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        console.log("卡片已發送至 Google 試算表背景寫入");
+      }).catch(err => {
+        console.error("卡片寫入 Google 試算表失敗", err);
+      });
+    }
+
+    function saveCustomCard(type, text, source) {
+      const cleanWord = cleanCardText(text);
+      if (!cleanWord) return;
+
+      const newCard = { text: cleanWord, source: source, isCustom: true };
+      unifiedPool[type].unshift(newCard);
+
+      // Save to localStorage
+      try {
+        let saved = JSON.parse(localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY) || '{"time":[],"person":[],"location":[],"event":[]}');
+        saved[type].unshift(newCard);
+        localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(saved));
+      } catch (err) {
+        console.error(err);
+      }
+
+      // 同步推播至 Google 試算表
+      pushCardToCloud(type, cleanWord, source);
+
       updateCharts();
-      showToast(`已移除卡片：「${text}」`, "info");
-    };
+      renderCardLists();
+      showToast(`已成功新增【${cleanWord}】並同步上傳至雲端試算表！`, "success");
+    }
 
-    // Single Card Slot Reset/Blank
-    window.clearSingleCard = function(type, notify = true) {
-      currentDraw[type] = null;
-      const slot = document.getElementById(`slot-${type}`);
-      if (slot) {
-        slot.classList.remove('card-flip');
-        void slot.offsetWidth;
-        slot.classList.add('card-flip');
-
-        const wordEl = slot.querySelector('.card-word');
-        const metaEl = slot.querySelector('.card-meta');
-        if (wordEl) wordEl.textContent = "✨ 自由發揮（留白）";
-        if (metaEl) metaEl.textContent = "自由創作";
+    function checkUrlForCloudGasParam() {
+      const params = new URLSearchParams(window.location.search);
+      const gas = params.get('gas');
+      if (gas) {
+        cloudGasUrl = decodeURIComponent(gas);
+        localStorage.setItem(CLOUD_GAS_URL_STORAGE_KEY, cloudGasUrl);
+      } else {
+        const saved = localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY);
+        if (saved) cloudGasUrl = saved;
       }
-      updateCombinedSolutionText();
+    }
 
-      const typeNames = { time: '時間', person: '人物', location: '地點', event: '事件' };
-      if (notify) {
-        showToast(`已重置【${typeNames[type]}】卡槽為留白，您可以自由創作！`, "info");
-      }
-    };
+    function updateCombinedSentence() {
+      const box = document.getElementById('colored-sentence-text');
+      if (!box) return;
 
-    // Reset All Card Slots to Blank
-    window.clearAllCards = function(notify = true) {
-      ['time', 'person', 'location', 'event'].forEach(t => clearSingleCard(t, false));
-      if (notify) {
-        showToast("已清空所有卡槽！你可以抽取部分卡牌當靈感，或者全自主創作！", "success");
-      }
-    };
+      const { time, person, location, event } = currentDraw;
+      const tText = time ? `<span class="text-amber-800 font-black bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200">${cleanCardText(time.text)}</span>` : `<span class="text-gray-400 font-bold border-b border-dashed border-gray-300 px-2">（時間自訂）</span>`;
+      const pText = person ? `<span class="text-sky-800 font-black bg-sky-100 px-2 py-0.5 rounded-lg border border-sky-200">${cleanCardText(person.text)}</span>` : `<span class="text-gray-400 font-bold border-b border-dashed border-gray-300 px-2">（人物自訂）</span>`;
+      const lText = location ? `<span class="text-emerald-800 font-black bg-emerald-100 px-2 py-0.5 rounded-lg border border-emerald-200">${cleanCardText(location.text)}</span>` : `<span class="text-gray-400 font-bold border-b border-dashed border-gray-300 px-2">（地點自訂）</span>`;
+      const eText = event ? `<span class="text-pink-800 font-black bg-pink-100 px-2 py-0.5 rounded-lg border border-pink-200">${cleanCardText(event.text)}</span>` : `<span class="text-gray-400 font-bold border-b border-dashed border-gray-300 px-2">（事件自訂）</span>`;
 
-    // Draw Single Card (抽卡從當前累積卡池中抽取)
-    window.drawCard = function(type) {
-      const cumulativePools = getCurrentPools();
-      const pool = cumulativePools[type];
-      const typeNames = { time: '時間', person: '人物', location: '地點', event: '事件' };
-      if (!pool || pool.length === 0) {
-        showToast(`【${typeNames[type]}】卡池目前是空的！`, "error");
-        return;
-      }
+      box.innerHTML = `${tText}，${pText}${lText}${eText}。`;
+    }
 
-      const randomIndex = Math.floor(Math.random() * pool.length);
-      const card = pool[randomIndex];
-      const cleanedCard = { ...card, text: cleanCardText(card.text) };
-      currentDraw[type] = cleanedCard;
-
-      const slot = document.getElementById(`slot-${type}`);
-      if (slot) {
-        slot.classList.remove('card-flip');
-        void slot.offsetWidth;
-        slot.classList.add('card-flip');
-
-        const wordEl = slot.querySelector('.card-word');
-        const metaEl = slot.querySelector('.card-meta');
-        if (wordEl) wordEl.textContent = cleanedCard.text;
-        if (metaEl) metaEl.textContent = cleanedCard.source || (cleanedCard.isCustom ? "自訂詞彙" : "課文出處");
-      }
-
-      updateCombinedSolutionText();
-    };
-
-    // Draw All 4 Cards
-    window.drawAll = function() {
-      ['time', 'person', 'location', 'event'].forEach(t => drawCard(t));
-      showToast("已為您隨機抽取四要素卡牌！", "success");
-    };
-
-    // Insert Drawn Card into Canvas Textarea
-    window.insertCardToInput = function(type) {
-      const card = currentDraw[type];
-      const typeNames = { time: '時間', person: '人物', location: '地點', event: '事件' };
-
-      if (!card) {
-        showToast(`【${typeNames[type]}】卡槽目前是留白的喔！請先抽卡，或直接在打字區發揮！`, "info");
-        return;
-      }
-
-      const input = document.getElementById('student-sentence-input');
-      const cursorStart = input.selectionStart;
-      const cursorEnd = input.selectionEnd;
-      const originalText = input.value;
-
-      const newText = originalText.substring(0, cursorStart) + card.text + originalText.substring(cursorEnd);
-      input.value = newText;
-      input.focus();
-      input.setSelectionRange(cursorStart + card.text.length, cursorStart + card.text.length);
-    };
-
-    // Insert Punctuation
-    window.insertPunctuation = function(symbol) {
-      const input = document.getElementById('student-sentence-input');
-      const cursorStart = input.selectionStart;
-      const cursorEnd = input.selectionEnd;
-      const originalText = input.value;
-
-      const newText = originalText.substring(0, cursorStart) + symbol + originalText.substring(cursorEnd);
-      input.value = newText;
-      input.focus();
-      input.setSelectionRange(cursorStart + symbol.length, cursorStart + symbol.length);
-    };
-
-    // Clear Canvas Input
-    window.clearStudentText = function() {
-      document.getElementById('student-sentence-input').value = "";
-    };
-
-    // Solution Box Toggle & Logic
     window.toggleSolutionBox = function() {
       const box = document.getElementById('combined-solution-box');
-      box.classList.toggle('hidden');
+      if (box) box.classList.toggle('hidden');
     };
 
-    function updateCombinedSolutionText() {
-      const el = document.getElementById('colored-sentence-text');
-      const { time, person, location, event } = currentDraw;
+    window.insertCardToInput = function(type) {
+      const card = currentDraw[type];
+      const input = document.getElementById('student-sentence-input');
+      if (!input) return;
 
-      const tText = time ? `<span class="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded mx-0.5">${cleanCardText(time.text)}</span>` : `<span class="bg-gray-100 text-gray-500 border border-gray-300 px-1.5 py-0.5 rounded mx-0.5 font-normal text-base">【自主時間】</span>`;
-      const pText = person ? `<span class="bg-sky-100 text-sky-900 px-1.5 py-0.5 rounded mx-0.5">${cleanCardText(person.text)}</span>` : `<span class="bg-gray-100 text-gray-500 border border-gray-300 px-1.5 py-0.5 rounded mx-0.5 font-normal text-base">【自主人物】</span>`;
-      const lText = location ? `<span class="bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded mx-0.5">${cleanCardText(location.text)}</span>` : `<span class="bg-gray-100 text-gray-500 border border-gray-300 px-1.5 py-0.5 rounded mx-0.5 font-normal text-base">【自主地點】</span>`;
-      const eText = event ? `<span class="bg-pink-100 text-pink-900 px-1.5 py-0.5 rounded mx-0.5">${cleanCardText(event.text)}</span>` : `<span class="bg-gray-100 text-gray-500 border border-gray-300 px-1.5 py-0.5 rounded mx-0.5 font-normal text-base">【自主事件】</span>`;
+      if (!card) {
+        showToast("該卡槽目前是留白狀態喔！請先抽卡或直接打字！", "info");
+        return;
+      }
+      const textToInsert = cleanCardText(card.text);
+      insertTextAtCursor(input, textToInsert);
+    };
 
-      el.innerHTML = `${tText}，${pText}${lText}${eText}。`;
+    window.insertPunctuation = function(char) {
+      const input = document.getElementById('student-sentence-input');
+      if (!input) return;
+      insertTextAtCursor(input, char);
+    };
+
+    function insertTextAtCursor(input, text) {
+      input.focus();
+      const start = input.selectionStart || input.value.length;
+      const end = input.selectionEnd || input.value.length;
+      const val = input.value;
+      input.value = val.substring(0, start) + text + val.substring(end);
+      input.selectionStart = input.selectionEnd = start + text.length;
     }
 
     window.applySampleToInput = function() {
       const { time, person, location, event } = currentDraw;
-      const t = time ? cleanCardText(time.text) : "（自訂時間）";
-      const p = person ? cleanCardText(person.text) : "（自訂人物）";
-      const l = location ? cleanCardText(location.text) : "（自訂地點）";
-      const e = event ? cleanCardText(event.text) : "（自訂事件）";
+      const t = time ? cleanCardText(time.text) : "";
+      const p = person ? cleanCardText(person.text) : "";
+      const l = location ? cleanCardText(location.text) : "";
+      const e = event ? cleanCardText(event.text) : "";
 
-      const sentence = `${t}，${p}${l}${e}。`;
-      document.getElementById('student-sentence-input').value = sentence;
-      showToast("已帶入目前卡牌與結構範例！", "success");
-    };
+      let sample = "";
+      if (t) sample += t + "，";
+      if (p) sample += p;
+      if (l) sample += l;
+      if (e) sample += e;
+      if (sample && !/[。！？]$/.test(sample)) sample += "。";
 
-    // 🌟 完整句小達人：改為跨要素混淆選項 ＋ 漸進式提示
-    let currentQuizAnswer = "";
-    let currentQuizTargetType = "";
-
-    window.toggleQuizHint = function() {
-      const hintBox = document.getElementById('quiz-hint-content');
-      const hintBtn = document.getElementById('quiz-hint-toggle-btn');
-      if (hintBox) {
-        hintBox.classList.toggle('hidden');
-        if (!hintBox.classList.contains('hidden')) {
-          hintBtn.innerHTML = `<span>🙈</span> 收起提示`;
-        } else {
-          hintBtn.innerHTML = `<span>💡</span> 需要提示嗎？（點我看缺了什麼要素）`;
-        }
-      }
-    };
-
-    window.generateQuizQuestion = function() {
-      const cumulativeSentences = getCurrentSentences();
-      const cumulativePools = getCurrentPools();
-
-      if (!cumulativeSentences || cumulativeSentences.length === 0) {
-        showToast("目前尚無足夠的課文原句題庫！", "error");
-        return;
-      }
-
-      const hintBox = document.getElementById('quiz-hint-content');
-      const hintBtn = document.getElementById('quiz-hint-toggle-btn');
-      if (hintBox) hintBox.classList.add('hidden');
-      if (hintBtn) hintBtn.innerHTML = `<span>💡</span> 需要提示嗎？（點我看缺了什麼要素）`;
-
-      const randSentenceObj = cumulativeSentences[Math.floor(Math.random() * cumulativeSentences.length)];
-      
-      const types = ['time', 'person', 'location', 'event'];
-      const availableTypes = types.filter(t => randSentenceObj[t] && String(randSentenceObj[t]).trim().length > 0);
-      const targetType = availableTypes[Math.floor(Math.random() * availableTypes.length)] || 'event';
-      currentQuizTargetType = targetType;
-      
-      const typeNames = { time: '時間要素', person: '人物要素', location: '地點要素', event: '事件要素' };
-      document.getElementById('quiz-target-type').textContent = typeNames[targetType];
-      document.getElementById('quiz-source-tag').textContent = `出處：${randSentenceObj.source || '精選課文原句'}`;
-
-      currentQuizAnswer = cleanCardText(randSentenceObj[targetType]);
-
-      const originTargetVal = randSentenceObj[targetType];
-      let formattedDisplay = randSentenceObj.fullText;
-
-      const blankPlaceholder = `<span class="bg-purple-200 text-purple-950 border-2 border-dashed border-purple-500 px-3 py-1 rounded-xl animate-pulse font-black shadow-inner">❓ 【 少了什麼？ 】</span>`;
-
-      if (formattedDisplay.includes(originTargetVal)) {
-        formattedDisplay = formattedDisplay.replace(originTargetVal, blankPlaceholder);
-      } else {
-        formattedDisplay = `
-          <span class="${targetType === 'time' ? 'bg-purple-200 text-purple-950 border-2 border-dashed border-purple-500 px-3 py-1 rounded-xl animate-pulse shadow-inner' : ''}">${targetType === 'time' ? '❓ 【 少了什麼？ 】' : randSentenceObj.time}</span>，
-          <span class="${targetType === 'person' ? 'bg-purple-200 text-purple-950 border-2 border-dashed border-purple-500 px-3 py-1 rounded-xl animate-pulse shadow-inner' : ''}">${targetType === 'person' ? '❓ 【 少了什麼？ 】' : randSentenceObj.person}</span>
-          <span class="${targetType === 'location' ? 'bg-purple-200 text-purple-950 border-2 border-dashed border-purple-500 px-3 py-1 rounded-xl animate-pulse shadow-inner' : ''}">${targetType === 'location' ? '❓ 【 少了什麼？ 】' : randSentenceObj.location}</span>
-          <span class="${targetType === 'event' ? 'bg-purple-200 text-purple-950 border-2 border-dashed border-purple-500 px-3 py-1 rounded-xl animate-pulse shadow-inner' : ''}">${targetType === 'event' ? '❓ 【 少了什麼？ 】' : randSentenceObj.event}</span>。
-        `;
-      }
-
-      const sentenceDisplay = document.getElementById('quiz-sentence-display');
-      sentenceDisplay.innerHTML = formattedDisplay;
-
-      const options = [{ text: currentQuizAnswer, type: targetType, isCorrect: true }];
-
-      const otherTypes = types.filter(t => t !== targetType);
-      for (let i = otherTypes.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [otherTypes[i], otherTypes[j]] = [otherTypes[j], otherTypes[i]];
-      }
-
-      const fallbackWords = {
-        time: ["太陽下山時", "放學後的一瞬間", "週末的清晨"],
-        person: ["熱心的警察先生", "森林裡的松鼠弟弟", "隔壁班的同學"],
-        location: ["在微風徐徐的操場旁", "在熱鬧的校園角落", "在溫暖舒適的教室裡"],
-        event: ["津津有味地品嚐點心", "開心地跳躍並拍手歡呼", "仔細觀察地上的落葉"]
-      };
-
-      for (let idx = 0; idx < 2; idx++) {
-        const pickType = otherTypes[idx];
-        const pool = cumulativePools[pickType] || [];
-        let candidate = "";
-
-        if (pool.length > 0) {
-          const randCard = pool[Math.floor(Math.random() * pool.length)];
-          candidate = cleanCardText(randCard.text);
-        } else {
-          candidate = fallbackWords[pickType][0];
-        }
-
-        if (!candidate || options.some(o => o.text === candidate)) {
-          candidate = fallbackWords[pickType][idx] || "在安靜的走廊上";
-        }
-
-        options.push({ text: candidate, type: pickType, isCorrect: false });
-      }
-
-      for (let i = options.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [options[i], options[j]] = [options[j], options[i]];
-      }
-
-      const optionsGrid = document.getElementById('quiz-options-grid');
-      optionsGrid.innerHTML = '';
-
-      options.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = "bg-white hover:bg-purple-100 text-purple-950 border-2 border-purple-300 font-black py-3 px-4 rounded-xl text-sm md:text-base shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0";
-        btn.textContent = opt.text;
-        btn.onclick = () => checkQuizAnswer(opt.text, randSentenceObj, opt.type, targetType);
-        optionsGrid.appendChild(btn);
-      });
-
-      const feedback = document.getElementById('quiz-feedback');
-      feedback.className = "hidden";
-    };
-
-    window.checkQuizAnswer = function(selectedText, sentenceObj, selectedType, targetType) {
-      const feedback = document.getElementById('quiz-feedback');
-      feedback.classList.remove('hidden');
-
-      const typeNames = { time: '時間', person: '人物', location: '地點', event: '事件' };
-
-      if (selectedText === currentQuizAnswer) {
-        feedback.className = "text-emerald-900 bg-emerald-100 border-2 border-emerald-400 font-black py-3 px-4 rounded-xl block shadow-sm";
-        feedback.innerHTML = `🎉 太厲害了！完全正確！<br><span class="text-xs font-normal text-emerald-800">這個句子缺少的是【${typeNames[targetType]}】，填入「${currentQuizAnswer}」讓整句話通順又完整！<br>課文原句：「${sentenceObj.fullText}」</span>`;
-        playTts("太棒了！答對了！");
-      } else {
-        feedback.className = "text-rose-900 bg-rose-100 border-2 border-rose-400 font-black py-3 px-4 rounded-xl block shadow-sm";
-        feedback.innerHTML = `🤔 再觀察一下喔！你選的「${selectedText}」屬於【${typeNames[selectedType]}】，但原句缺少的其實是【${typeNames[targetType]}】。<br><span class="text-xs font-normal text-rose-800">課文原句要素是：「${currentQuizAnswer}」<br>原句：「${sentenceObj.fullText}」</span>`;
-        playTts("再想想看喔！");
-      }
-    };
-
-    // Submit Sentence to Class Gallery
-    window.submitToClassGallery = function() {
       const input = document.getElementById('student-sentence-input');
-      const nameInput = document.getElementById('student-name-input');
-      const text = input.value.trim();
-      const author = nameInput.value.trim() || "匿名學生";
+      if (input && sample) {
+        input.value = sample;
+        showToast("已將當前組合帶入打字區！", "success");
+      }
+    };
 
-      if (!text) {
-        showToast("打字區不能是空的喔！請先寫下句子。", "error");
+    window.clearStudentText = function() {
+      const input = document.getElementById('student-sentence-input');
+      if (input) input.value = "";
+    };
+
+    // Padlet Submission with auto copy
+    window.submitAndGoToPadlet = function() {
+      const studentName = document.getElementById('student-name-input').value.trim() || "造句小達人";
+      const sentence = document.getElementById('student-sentence-input').value.trim();
+
+      if (!sentence) {
+        showToast("請先在打字區寫下你的造句喔！", "error");
         return;
       }
 
-      const newItem = {
-        id: Date.now(),
-        level: "自主造句",
-        author: author,
-        text: text,
-        likes: 0,
-        liked: false,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
+      const copyPayload = `【${studentName} 的造句作品】\n${sentence}`;
 
-      classGallery.unshift(newItem);
-      document.getElementById('gallery-count-badge').textContent = classGallery.length;
-      
-      renderGallery();
-      showToast("🚀 已成功將作品發表至全班彙整牆！", "success");
-      switchTab('gallery');
+      navigator.clipboard.writeText(copyPayload).then(() => {
+        showToast("🎉 已成功複製姓名與造句！正在前往 Padlet...", "success");
+        setTimeout(() => {
+          if (teacherPadletUrl) {
+            window.open(teacherPadletUrl, "_blank");
+          } else {
+            togglePadletModal(true);
+            showToast("尚未設定班級 Padlet 網址，請先在此輸入！", "info");
+          }
+        }, 600);
+      }).catch(() => {
+        if (teacherPadletUrl) window.open(teacherPadletUrl, "_blank");
+      });
     };
 
-    // Render Class Gallery
-    window.renderGallery = function() {
+    // ============================================================
+    // 4. 全班彙整牆 (Class Gallery)
+    // ============================================================
+    window.submitToClassGallery = function() {
+      const name = document.getElementById('student-name-input').value.trim() || "造句小達人";
+      const sentence = document.getElementById('student-sentence-input').value.trim();
+
+      if (!sentence) {
+        showToast("打字區目前沒有內容喔！請先寫下句子！", "error");
+        return;
+      }
+
+      const submission = {
+        id: Date.now(),
+        name: name,
+        sentence: sentence,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        likes: 0
+      };
+
+      classGallery.unshift(submission);
+      saveGalleryToStorage();
+      renderGallery();
+      showToast("🎉 恭喜！作品已成功存至本機班級成果牆！", "success");
+    };
+
+    function saveGalleryToStorage() {
+      try {
+        localStorage.setItem(CLASS_GALLERY_STORAGE_KEY, JSON.stringify(classGallery));
+        updateGalleryBadge();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function loadGalleryFromStorage() {
+      try {
+        const saved = localStorage.getItem(CLASS_GALLERY_STORAGE_KEY);
+        if (saved) classGallery = JSON.parse(saved);
+      } catch (e) {
+        classGallery = [];
+      }
+      renderGallery();
+      updateGalleryBadge();
+    }
+
+    function updateGalleryBadge() {
+      const badge = document.getElementById('gallery-count-badge');
+      if (badge) badge.textContent = classGallery.length;
+    }
+
+    function renderGallery() {
       const grid = document.getElementById('gallery-grid');
       const emptyState = document.getElementById('gallery-empty-state');
-      const filter = document.getElementById('gallery-level-filter').value;
+      if (!grid) return;
 
-      const filteredItems = filter === 'ALL' ? classGallery : classGallery.filter(item => item.level === filter);
-
-      if (filteredItems.length === 0) {
-        grid.innerHTML = '';
-        emptyState.classList.remove('hidden');
+      if (classGallery.length === 0) {
+        grid.innerHTML = "";
+        if (emptyState) emptyState.classList.remove('hidden');
         return;
       }
 
-      emptyState.classList.add('hidden');
-      grid.innerHTML = filteredItems.map(item => `
-        <div class="bg-white rounded-2xl p-5 border border-emerald-200/80 shadow-sm flex flex-col justify-between space-y-3 relative hover:shadow-md transition-all">
-          <div class="flex items-center justify-between border-b border-gray-100 pb-2">
-            <div class="flex items-center gap-2">
-              <span class="bg-emerald-100 text-emerald-900 font-black text-[11px] px-2 py-0.5 rounded">${item.level}</span>
-              <span class="font-black text-gray-800 text-sm">${item.author}</span>
+      if (emptyState) emptyState.classList.add('hidden');
+
+      grid.innerHTML = classGallery.map(item => `
+        <div class="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-3 flex flex-col justify-between hover:border-emerald-300 transition-all">
+          <div>
+            <div class="flex justify-between items-center text-xs font-bold text-gray-500 border-b border-gray-100 pb-2">
+              <span class="text-emerald-950 font-black text-sm">👤 ${item.name}</span>
+              <span>🕒 ${item.timestamp}</span>
             </div>
-            <span class="text-[10px] font-bold text-gray-400">${item.timestamp}</span>
+            <p class="text-base font-bold text-gray-800 leading-relaxed pt-2">${item.sentence}</p>
           </div>
-
-          <p class="text-gray-800 font-bold text-base md:text-lg leading-relaxed py-1">
-            ${item.text}
-          </p>
-
-          <div class="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-            <button onclick="toggleGalleryLike(${item.id})" class="flex items-center gap-1 font-bold ${item.liked ? 'text-rose-600' : 'text-gray-400 hover:text-rose-500'} transition-all">
-              <span>${item.liked ? '❤️' : '🤍'}</span>
-              <span>${item.likes}</span>
+          <div class="flex justify-between items-center pt-2 border-t border-gray-50 text-xs">
+            <button onclick="likeGalleryItem(${item.id})" class="flex items-center gap-1 font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition-all">
+              <span>❤️</span> <span>${item.likes || 0}</span>
             </button>
-
-            <button onclick="playTts('${item.text}')" class="text-indigo-600 hover:text-indigo-800 font-bold">
-              🔊 朗讀作品
-            </button>
+            <div class="flex items-center gap-1">
+              <button onclick="playTts('${item.sentence.replace(/'/g, "\\'")}')" class="text-indigo-600 hover:text-indigo-800 p-1 font-bold">
+                🔊 朗讀
+              </button>
+              <button onclick="deleteGalleryItem(${item.id})" class="text-gray-400 hover:text-rose-600 p-1 font-bold ml-1">
+                ✕
+              </button>
+            </div>
           </div>
         </div>
       `).join('');
-    };
+    }
 
-    window.toggleGalleryLike = function(id) {
+    window.likeGalleryItem = function(id) {
       const item = classGallery.find(x => x.id === id);
       if (item) {
-        item.liked = !item.liked;
-        item.likes += item.liked ? 1 : -1;
+        item.likes = (item.likes || 0) + 1;
+        saveGalleryToStorage();
         renderGallery();
       }
     };
 
-    window.clearAllGallery = function() {
-      classGallery = [];
-      document.getElementById('gallery-count-badge').textContent = 0;
+    window.deleteGalleryItem = function(id) {
+      classGallery = classGallery.filter(x => x.id !== id);
+      saveGalleryToStorage();
       renderGallery();
-      showToast("已清空彙整牆！", "info");
     };
 
-    // Internal Silent Purge
-    function internalPurgeAllInvalid() {
-      ['time', 'person', 'location', 'event'].forEach(t => {
-        if (unifiedPool[t]) {
-          unifiedPool[t] = unifiedPool[t].filter(card => isValidCardText(card.text));
-        }
-      });
-      masterSentences = masterSentences.filter(s => s && s.fullText);
-    }
-
-    // Purge Invalid Non-Chinese Cards
-    window.purgeInvalidCards = function() {
-      let removedTotal = 0;
-      ['time', 'person', 'location', 'event'].forEach(t => {
-        if (unifiedPool[t]) {
-          const originalLen = unifiedPool[t].length;
-          unifiedPool[t] = unifiedPool[t].filter(card => isValidCardText(card.text));
-          removedTotal += (originalLen - unifiedPool[t].length);
-        }
-      });
-
-      saveCustomCardsToStorage();
-      renderCardLists();
-      updateCharts();
-
-      if (removedTotal > 0) {
-        showToast(`🧹 已精確清除 ${removedTotal} 張包含說明文字或非詞彙卡片！`, "success");
-      } else {
-        showToast("✨ 目前所有卡池均為純淨國語造句詞彙！", "info");
-      }
+    window.clearAllGallery = function() {
+      if (classGallery.length === 0) return;
+      classGallery = [];
+      saveGalleryToStorage();
+      renderGallery();
+      showToast("已清空本機成果牆！", "info");
     };
 
-    // Multi-Format Excel Upload Handler (支援課文原句示範匯入)
-    window.handleBatchFileUpload = async function(event) {
-      const files = event.target.files;
-      if (!files || files.length === 0) return;
-
-      let importedCount = 0;
-      let sentenceImported = 0;
-
-      for (let fIdx = 0; fIdx < files.length; fIdx++) {
-        const file = files[fIdx];
-        try {
-          const buffer = await file.arrayBuffer();
-          const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
-
-          workbook.SheetNames.forEach(sheetName => {
-            const ws = workbook.Sheets[sheetName];
-            const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-            if (!rows || rows.length === 0) return;
-
-            let tIdx = -1, wIdx = -1, sIdx = -1, fullSentenceIdx = -1;
-            let colMap = { time: -1, person: -1, location: -1, event: -1 };
-
-            const header = rows[0] || [];
-            header.forEach((c, i) => {
-              const str = String(c || '').trim();
-              if (str.includes("要素") || str.includes("類別") || str.includes("類型")) tIdx = i;
-              else if (str.includes("詞語") || str.includes("卡牌") || str.includes("內容") || str.includes("詞彙") || str.includes("短語")) wIdx = i;
-              else if (str.includes("出處") || str.includes("課次") || str.includes("來源") || str.includes("備註")) sIdx = i;
-              else if (str.includes("原句") || str.includes("示範") || str.includes("例句") || str.includes("完整句")) fullSentenceIdx = i;
-
-              if (str.includes("時")) colMap.time = i;
-              else if (str.includes("人") || str.includes("角色") || str.includes("主角")) colMap.person = i;
-              else if (str.includes("地") || str.includes("場")) colMap.location = i;
-              else if (str.includes("事") || str.includes("動") || str.includes("情節")) colMap.event = i;
-            });
-
-            const detectType = (val) => {
-              const s = String(val || '');
-              if (s.includes("時")) return "time";
-              if (s.includes("人") || s.includes("角色")) return "person";
-              if (s.includes("地") || s.includes("場")) return "location";
-              if (s.includes("事") || s.includes("動")) return "event";
-              return null;
-            };
-
-            const tryAddCard = (cardType, rawText, src) => {
-              const cleaned = cleanCardText(rawText);
-              if (isValidCardText(cleaned) && unifiedPool[cardType]) {
-                const exists = unifiedPool[cardType].some(c => c.text === cleaned);
-                if (!exists) {
-                  unifiedPool[cardType].push({ text: cleaned, source: src || "自訂匯入", isCustom: true });
-                  importedCount++;
-                }
-              }
-            };
-
-            if (colMap.time !== -1 && colMap.person !== -1 && colMap.location !== -1 && colMap.event !== -1) {
-              for (let r = 1; r < rows.length; r++) {
-                const row = rows[r];
-                if (!row) continue;
-                const tW = cleanCardText(row[colMap.time]);
-                const pW = cleanCardText(row[colMap.person]);
-                const lW = cleanCardText(row[colMap.location]);
-                const eW = cleanCardText(row[colMap.event]);
-                const src = sIdx !== -1 && row[sIdx] ? String(row[sIdx]).trim() : sheetName;
-                const fullTxt = (fullSentenceIdx !== -1 && row[fullSentenceIdx]) ? String(row[fullSentenceIdx]).trim() : `${tW}，${pW}${lW}${eW}。`;
-
-                if (isValidCardText(tW) && isValidCardText(pW) && isValidCardText(lW) && isValidCardText(eW)) {
-                  tryAddCard('time', tW, src);
-                  tryAddCard('person', pW, src);
-                  tryAddCard('location', lW, src);
-                  tryAddCard('event', eW, src);
-
-                  masterSentences.push({
-                    fullText: fullTxt,
-                    time: tW, person: pW, location: lW, event: eW,
-                    source: src || "匯入課文示範"
-                  });
-                  sentenceImported++;
-                }
-              }
-            } else if (tIdx !== -1 && wIdx !== -1) {
-              for (let r = 1; r < rows.length; r++) {
-                const row = rows[r];
-                if (!row) continue;
-                const pType = detectType(row[tIdx]);
-                const src = sIdx !== -1 && row[sIdx] ? String(row[sIdx]).trim() : "自訂匯入";
-                if (pType) tryAddCard(pType, row[wIdx], src);
-              }
-            }
-          });
-        } catch (err) {
-          console.error("Error reading file:", err);
-        }
-      }
-
-      saveCustomCardsToStorage();
-      renderCardLists();
-      updateCharts();
-      generateQuizQuestion();
-
-      if (importedCount > 0) {
-        showToast(`🎉 成功匯入 ${importedCount} 張詞彙${sentenceImported > 0 ? `與 ${sentenceImported} 句課文示範原句` : ''}！`, "success");
-      } else {
-        showToast("⚠️ 未能抓取到有效詞彙，請確認檔案格式。", "error");
-      }
-    };
-
-    // Export Current Level Cumulative Card Pool to Excel
-    window.exportCurrentPoolToExcel = function() {
-      const wb = XLSX.utils.book_new();
-      const pools = getCurrentPools();
-
-      const singleSheetRows = [];
-      const typeNameMap = { time: '時間', person: '人物', location: '地點', event: '事件' };
-
-      ['time', 'person', 'location', 'event'].forEach(t => {
-        pools[t].forEach(card => {
-          singleSheetRows.push({
-            "要素類別": typeNameMap[t],
-            "卡牌詞語": cleanCardText(card.text),
-            "課文出處": card.source || ""
-          });
-        });
-      });
-
-      const ws = XLSX.utils.json_to_sheet(singleSheetRows);
-      ws['!cols'] = [{ wch: 14 }, { wch: 35 }, { wch: 18 }];
-
-      XLSX.utils.book_append_sheet(wb, ws, `造句抽卡池`);
-      XLSX.writeFile(wb, `國小國語造句卡池.xlsx`);
-      showToast(`已成功匯出卡池題庫！`, "success");
-    };
-
-    // Export Gallery to Excel
     window.exportGalleryToExcel = function() {
       if (classGallery.length === 0) {
-        showToast("目前沒有作品可供匯出！", "info");
+        showToast("成果牆目前沒有作品可匯出喔！", "info");
         return;
       }
-
-      const rows = classGallery.map(item => ({
-        "難度階梯": item.level,
-        "學生姓名/座號": item.author,
-        "造句內容": item.text,
-        "獲讚數": item.likes,
-        "繳交時間": item.timestamp
+      const data = classGallery.map((item, idx) => ({
+        "編號": idx + 1,
+        "學生姓名/座號": item.name,
+        "造句作品": item.sentence,
+        "送出時間": item.timestamp,
+        "愛心數": item.likes || 0
       }));
-
-      const ws = XLSX.utils.json_to_sheet(rows);
-      ws['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 48 }, { wch: 8 }, { wch: 12 }];
-
+      const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "班級造句成果");
-      XLSX.writeFile(wb, `班級造句成果彙整表_${new Date().toISOString().slice(0,10)}.xlsx`);
-      showToast("已成功下載班級成果 Excel！", "success");
+      XLSX.writeFile(wb, `班級造句成果_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
-    // Export Gallery to CSV
     window.exportGalleryToCsv = function() {
       if (classGallery.length === 0) {
-        showToast("目前沒有作品可供匯出！", "info");
+        showToast("成果牆目前沒有作品可匯出喔！", "info");
         return;
       }
-      let csvContent = "\uFEFF難度階梯,學生姓名,造句內容,獲讚數,時間\n";
+      let csvContent = "\uFEFF學生姓名,造句作品,時間,愛心數\n";
       classGallery.forEach(item => {
-        csvContent += `"${item.level}","${item.author}","${item.text.replace(/"/g, '""')}","${item.likes}","${item.timestamp}"\n`;
+        csvContent += `"${item.name}","${item.sentence.replace(/"/g, '""')}","${item.timestamp}",${item.likes || 0}\n`;
       });
-
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `班級造句成果牆_${new Date().toISOString().slice(0,10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `班級造句成果_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     };
 
-    // Print Gallery Report
     window.printGalleryReport = function() {
       if (classGallery.length === 0) {
-        showToast("目前尚無作品可列印！", "info");
+        showToast("目前沒有作品可列印！", "info");
         return;
       }
-
       const printWindow = window.open('', '_blank');
-      const today = new Date().toLocaleDateString();
-      const rowsHtml = classGallery.map(item => `
+      const rowsHtml = classGallery.map((item, idx) => `
         <tr>
-          <td>${item.level}</td>
-          <td>${item.author}</td>
-          <td style="text-align: left;">${item.text}</td>
-          <td>${item.timestamp}</td>
-          <td>${item.likes} ❤️</td>
+          <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${idx + 1}</td>
+          <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${item.name}</td>
+          <td style="padding: 10px; border: 1px solid #ddd;">${item.sentence}</td>
+          <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${item.timestamp}</td>
+          <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${item.likes || 0}</td>
         </tr>
       `).join('');
 
@@ -1679,32 +1619,29 @@
         <!DOCTYPE html>
         <html>
         <head>
-          <title>國小國語造句學習成果表</title>
+          <title>班級國語造句成果表</title>
           <style>
-            body { font-family: 'Noto Sans TC', sans-serif; padding: 20px; color: #111; }
-            h1 { text-align: center; margin-bottom: 5px; }
-            .subtitle { text-align: center; font-size: 13px; color: #555; margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; }
-            th, td { border: 1px solid #333; padding: 8px; }
-            th { background-color: #f2f2f2; }
+            body { font-family: system-ui, sans-serif; padding: 24px; color: #222; }
+            h1 { text-align: center; margin-bottom: 4px; }
+            .subtitle { text-align: center; color: #666; font-size: 12px; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th { background-color: #F8FAFC; border: 1px solid #ddd; padding: 10px; }
           </style>
         </head>
         <body>
           <h1>🎒 國小國語 造句學習成果表</h1>
-          <div class="subtitle">列印日期：${today} ｜ 成果總數：共 ${classGallery.length} 篇</div>
+          <div class="subtitle">列印日期：${new Date().toLocaleDateString()} ｜ 成果總數：共 ${classGallery.length} 篇</div>
           <table>
             <thead>
               <tr>
-                <th style="width: 140px;">難度階梯</th>
-                <th style="width: 120px;">學生姓名</th>
+                <th style="width: 50px;">項次</th>
+                <th style="width: 130px;">作者姓名</th>
                 <th>造句作品內容</th>
-                <th style="width: 90px;">時間</th>
-                <th style="width: 70px;">愛心</th>
+                <th style="width: 100px;">時間</th>
+                <th style="width: 60px;">愛心</th>
               </tr>
             </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
+            <tbody>${rowsHtml}</tbody>
           </table>
         </body>
         </html>
@@ -1716,7 +1653,180 @@
       }, 300);
     };
 
-    // Speech synthesis
+    // ============================================================
+    // 5. 自訂卡片與卡池檢視 (Analytics)
+    // ============================================================
+    window.toggleCustomCardModal = function(show) {
+      const modal = document.getElementById('custom-card-modal');
+      if (modal) modal.classList.toggle('hidden', !show);
+    };
+
+    window.handleCustomCardSubmit = function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const type = form['modal-card-type'].value;
+      const text = document.getElementById('modal-card-text').value.trim();
+      const source = document.getElementById('modal-card-source').value.trim() || "師生自訂";
+
+      if (!text) return;
+      saveCustomCard(type, text, source);
+      form.reset();
+      toggleCustomCardModal(false);
+    };
+
+    window.submitInlineCustomCard = function() {
+      const type = document.getElementById('inline-card-type').value;
+      const text = document.getElementById('inline-card-text').value.trim();
+      const source = document.getElementById('inline-card-source').value.trim() || "師生自訂";
+
+      if (!text) {
+        showToast("請輸入卡片詞彙內容！", "error");
+        return;
+      }
+      saveCustomCard(type, text, source);
+      document.getElementById('inline-card-text').value = "";
+    };
+
+    function saveCustomCard(type, text, source) {
+      const cleanWord = cleanCardText(text);
+      if (!cleanWord) return;
+
+      const newCard = { text: cleanWord, source: source, isCustom: true };
+      unifiedPool[type].unshift(newCard);
+
+      // Save to localStorage
+      try {
+        let saved = JSON.parse(localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY) || '{"time":[],"person":[],"location":[],"event":[]}');
+        saved[type].unshift(newCard);
+        localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(saved));
+      } catch (err) {
+        console.error(err);
+      }
+
+      updateCharts();
+      renderCardLists();
+      showToast(`已成功新增【${cleanWord}】至卡池！`, "success");
+    }
+
+    window.deleteSingleCardFromPool = function(type, text) {
+      unifiedPool[type] = unifiedPool[type].filter(item => cleanCardText(item.text) !== cleanCardText(text));
+      
+      // Update custom storage
+      try {
+        let saved = JSON.parse(localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY) || '{"time":[],"person":[],"location":[],"event":[]}');
+        if (saved[type]) {
+          saved[type] = saved[type].filter(item => cleanCardText(item.text) !== cleanCardText(text));
+          localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(saved));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      updateCharts();
+      renderCardLists();
+      showToast(`已從卡池刪除「${text}」！`, "info");
+    };
+
+    window.purgeInvalidCards = function() {
+      let count = 0;
+      ['time', 'person', 'location', 'event'].forEach(k => {
+        const initial = unifiedPool[k].length;
+        unifiedPool[k] = unifiedPool[k].filter(item => {
+          const t = cleanCardText(item.text);
+          return t.length >= 2 && !/^(時間|人物|地點|事件|出處|適用年級)$/.test(t);
+        });
+        count += (initial - unifiedPool[k].length);
+      });
+      updateCharts();
+      renderCardLists();
+      showToast(`清理完成！共移除了 ${count} 張非詞彙或無效卡片！`, "success");
+    };
+
+    window.resetDefaultPools = function() {
+      localStorage.removeItem(CUSTOM_CARDS_STORAGE_KEY);
+      initUnifiedPool();
+      clearAllCards(false);
+      renderCardLists();
+      updateCharts();
+      generateQuizQuestion();
+      showToast("已成功還原為內建 415 張預設題庫！", "success");
+    };
+
+    window.handleBatchFileUpload = function(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          try {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            let addedCount = 0;
+
+            workbook.SheetNames.forEach(sheetName => {
+              const sheet = workbook.Sheets[sheetName];
+              const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+              if (json.length < 2) return;
+
+              json.slice(1).forEach(row => {
+                if (!Array.isArray(row)) return;
+                const typeStr = String(row[1] || row[0] || "");
+                const word = String(row[2] || row[1] || "").trim();
+                const source = String(row[3] || row[2] || "Excel匯入").trim();
+
+                let category = null;
+                if (/時/.test(typeStr)) category = 'time';
+                else if (/人|角色/.test(typeStr)) category = 'person';
+                else if (/地|處/.test(typeStr)) category = 'location';
+                else if (/事|動作/.test(typeStr)) category = 'event';
+
+                if (category && word && word.length >= 2) {
+                  unifiedPool[category].unshift({ text: word, source: source, isCustom: true });
+                  addedCount++;
+                }
+              });
+            });
+
+            updateCharts();
+            renderCardLists();
+            showToast(`成功從 ${file.name} 匯入了 ${addedCount} 張新卡牌！`, "success");
+          } catch (err) {
+            console.error(err);
+            showToast(`檔案 ${file.name} 讀取解析失敗。`, "error");
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      });
+      e.target.value = "";
+    };
+
+    window.exportCurrentPoolToExcel = function() {
+      const data = [];
+      const types = [
+        { key: 'time', name: '時間' },
+        { key: 'person', name: '人物' },
+        { key: 'location', name: '地點' },
+        { key: 'event', name: '事件' }
+      ];
+
+      types.forEach(t => {
+        unifiedPool[t.key].forEach(item => {
+          data.push({
+            "要素類別": t.name,
+            "卡牌詞彙": cleanCardText(item.text),
+            "出處/備註": item.source || "課文"
+          });
+        });
+      });
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "全卡池清單");
+      XLSX.writeFile(wb, `國語造句卡池清單_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    };
+
+    // TTS Speech Synthesis
     window.playTts = function(text) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
@@ -1762,17 +1872,6 @@
       });
     };
 
-    window.resetDefaultPools = function() {
-      localStorage.removeItem(CUSTOM_CARDS_STORAGE_KEY);
-      initUnifiedPool();
-      clearAllCards(false);
-      renderCardLists();
-      updateCharts();
-      generateQuizQuestion();
-      showToast("已成功還原為預設題庫！", "success");
-    };
-
-    // Toast Notification System
     window.showToast = function(message, type = 'info', duration = 3500) {
       const container = document.getElementById('toast-container');
       if (!container) return;
@@ -1798,16 +1897,22 @@
       }, duration);
     };
 
-    // Chart.js Setup
+    // Chart.js & List Rendering
     function initCharts() {
-      const pools = getCurrentPools();
-      const ctx1 = document.getElementById('poolDistributionChart').getContext('2d');
-      poolChartInstance = new Chart(ctx1, {
+      const canvas = document.getElementById('poolDistributionChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      poolChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: ['時間', '人物', '地點', '事件'],
           datasets: [{
-            data: [pools.time.length, pools.person.length, pools.location.length, pools.event.length],
+            data: [
+              unifiedPool.time.length,
+              unifiedPool.person.length,
+              unifiedPool.location.length,
+              unifiedPool.event.length
+            ],
             backgroundColor: ['#FCC419', '#4DABF7', '#69DB7C', '#FAA2C1']
           }]
         },
@@ -1820,30 +1925,30 @@
     }
 
     function updateCharts() {
-      const pools = getCurrentPools();
       if (poolChartInstance) {
         poolChartInstance.data.datasets[0].data = [
-          pools.time.length, pools.person.length, pools.location.length, pools.event.length
+          unifiedPool.time.length,
+          unifiedPool.person.length,
+          unifiedPool.location.length,
+          unifiedPool.event.length
         ];
         poolChartInstance.update();
       }
-
       renderCardLists();
     }
 
     function renderCardLists() {
-      const pools = getCurrentPools();
       const renderPool = (type, listId, countId, badgeId) => {
         const listEl = document.getElementById(listId);
         const countEl = document.getElementById(countId);
         const badgeEl = document.getElementById(badgeId);
-        const count = pools[type] ? pools[type].length : 0;
+        const count = unifiedPool[type] ? unifiedPool[type].length : 0;
 
         if (countEl) countEl.textContent = count;
         if (badgeEl) badgeEl.textContent = `(共${count}張)`;
 
         if (!listEl) return;
-        listEl.innerHTML = pools[type].map(item => `
+        listEl.innerHTML = unifiedPool[type].map(item => `
           <li class="flex justify-between items-center py-1 border-b border-gray-100 group">
             <span class="font-bold text-gray-800 flex items-center gap-1">
               ${cleanCardText(item.text)}
@@ -1864,6 +1969,20 @@
       renderPool('location', 'list-location', 'count-location', 'badge-location-count');
       renderPool('event', 'list-event', 'count-event', 'badge-event-count');
     }
+
+    // App Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      initUnifiedPool();
+      checkUrlForPadletParam();
+      checkUrlForCloudGasParam();
+      loadGalleryFromStorage();
+      clearAllCards(false);
+      generateQuizQuestion();
+      initCharts();
+      renderCardLists();
+      // 背景非同步載入 Google 試算表雲端卡片
+      setTimeout(() => fetchCloudCards(false), 500);
+    });
   </script>
 </body>
 </html>
