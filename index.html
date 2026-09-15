@@ -112,7 +112,7 @@
           <span>📌</span> 設定班級 Padlet
         </button>
 
-        <!-- Read-only Cloud Sync Status Indicator (Click disabled for students/teachers) -->
+        <!-- Read-only Cloud Sync Status Indicator -->
         <div class="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1 shadow-sm select-none cursor-default" title="系統已自動連線全台共創卡池">
           <span id="cloud-status-icon">🟢</span> <span id="cloud-status-text">雲端卡池同步中</span>
         </div>
@@ -650,11 +650,22 @@
   <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <!-- Footer Section -->
-  <footer class="bg-white border-t border-amber-100 py-6 text-center text-xs text-amber-900/60">
-    <div class="max-w-6xl mx-auto px-4 space-y-1">
-      <p>國小國語造句訓練互動平台｜ Created By yilin shishi</p>
-      <p class="text-[11px] text-gray-400">國小記敘文四要素：時間 ✕ 人物 ✕ 地點 ✕ 事件 靈感啟發教學系統</p>
+  <!-- Footer Section (With Legal Disclaimer) -->
+  <footer class="bg-white border-t border-amber-100 py-6 text-center text-xs text-amber-900/80">
+    <div class="max-w-4xl mx-auto px-4 space-y-2.5">
+      <p class="font-bold text-sm text-amber-950">國小國語造句訓練互動平台 ｜ Created By yilin shishi</p>
+      <p class="text-[11px] text-gray-500 font-medium">國小記敘文四要素：時間 ✕ 人物 ✕ 地點 ✕ 事件 靈感啟發教學系統</p>
+      
+      <!-- Legal Disclaimer Block -->
+      <div class="pt-3 border-t border-amber-100/80 text-[11px] text-gray-400 leading-relaxed max-w-3xl mx-auto space-y-1">
+        <p class="font-bold text-gray-500">【非營利教育利用與版權免責聲明】</p>
+        <p>
+          本平台係基於公益、非營利語文教育推廣與課堂差異化教學輔助之目的建置，符合我國《著作權法》第 46 條及第 65 條合理使用之規範。
+        </p>
+        <p>
+          卡池詞彙及句型診斷例句均取材或改編自國內各版本國小國語教科書（康軒、翰林、南一）及公有領域經典語料，其著作權仍歸原出版單位及原創作者所有。本站不具商業收益行為，若原版權所有者對內容引用有未盡授權或任何疑慮，敬請聯繫管理者，我們將立即配合修正、替換或移除相關語料。
+        </p>
+      </div>
     </div>
   </footer>
 
@@ -843,7 +854,7 @@
     const TEACHER_PADLET_STORAGE_KEY = "mandarin_padlet_url_v3";
     const CLOUD_GAS_URL_STORAGE_KEY = "mandarin_cloud_gas_url_v3";
 
-    // 預設的雲端試算表 Web App 網址（若您有固定網址可直接填入雙引號內）
+    // 預設的雲端試算表 Web App 網址（可在此填入您的 /exec 網址）
     let cloudGasUrl = "https://script.google.com/macros/s/AKfycbxRrxqsVmpviLuN15xNcdr1ElOyBjt9WBZ6pcgTnWLqyXJwuXYj2dfAT6PI-s3Xyc_v/exec";
 
     let unifiedPool = { time: [], person: [], location: [], event: [] };
@@ -1180,7 +1191,6 @@
     // ============================================================
     // 5. 自訂卡片與卡池檢視 (Analytics) & 雲端同步
     // ============================================================
-    // 從 Google 試算表抓取跨班級累積的卡片
     function fetchCloudCards(showToastMsg = false) {
       const url = cloudGasUrl || localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY);
       const statusIcon = document.getElementById('cloud-status-icon');
@@ -1235,7 +1245,6 @@
         });
     }
 
-    // 將新自訂卡片非同步上傳至 Google 試算表
     function pushCardToCloud(type, text, source) {
       const url = cloudGasUrl || localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY);
       if (!url) return;
@@ -1248,7 +1257,7 @@
 
       fetch(url, {
         method: "POST",
-        mode: "no-cors", // 避免瀏覽器 CORS 阻擋 GAS
+        mode: "no-cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       }).then(() => {
@@ -1630,27 +1639,6 @@
       document.getElementById('inline-card-text').value = "";
     };
 
-    function saveCustomCard(type, text, source) {
-      const cleanWord = cleanCardText(text);
-      if (!cleanWord) return;
-
-      const newCard = { text: cleanWord, source: source, isCustom: true };
-      unifiedPool[type].unshift(newCard);
-
-      // Save to localStorage
-      try {
-        let saved = JSON.parse(localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY) || '{"time":[],"person":[],"location":[],"event":[]}');
-        saved[type].unshift(newCard);
-        localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(saved));
-      } catch (err) {
-        console.error(err);
-      }
-
-      updateCharts();
-      renderCardLists();
-      showToast(`已成功新增【${cleanWord}】至卡池！`, "success");
-    }
-
     window.deleteSingleCardFromPool = function(type, text) {
       unifiedPool[type] = unifiedPool[type].filter(item => cleanCardText(item.text) !== cleanCardText(text));
       
@@ -1923,7 +1911,6 @@
       generateQuizQuestion();
       initCharts();
       renderCardLists();
-      // 背景非同步載入 Google 試算表雲端卡片
       setTimeout(() => fetchCloudCards(false), 500);
     });
   </script>
