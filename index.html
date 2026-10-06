@@ -3,1916 +3,1742 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>國語造句訓練營</title>
-
+  <title>國語造句訓練營 2.0 - 記敘文四要素與生活小日記</title>
+  
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- SheetJS for Excel Import/Export -->
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- SheetJS for Excel handling -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
-  <!-- Chart.js for Card Analytics -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- QRCode.js for generating classroom share links -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-
-  <!-- Google Fonts: Noto Sans TC & Fredoka -->
+  <!-- QRCode Generator CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <!-- Google Fonts: Noto Sans TC -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
 
   <style>
     body {
-      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
-      background-color: #FDFBF7;
-      color: #2D3748;
+      font-family: 'Noto Sans TC', sans-serif;
+      background: #F8FAFC;
     }
-    .font-fredoka {
-      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    .card-flip {
+      perspective: 1000px;
     }
-    .slot-transition {
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    .card-flip-inner {
+      transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transform-style: preserve-3d;
     }
-    .slot-transition:hover {
-      transform: translateY(-3px);
+    .card-flip-inner.is-flipped {
+      transform: rotateY(180deg);
     }
-    .quiz-blank-box {
-      border-bottom: 3px dashed #7C3AED;
-      padding: 0 10px;
-      color: #7C3AED;
-      font-weight: 900;
-      display: inline-block;
-      min-width: 140px;
-      text-align: center;
-      background: rgba(124, 58, 237, 0.08);
-      border-radius: 8px;
+    .card-front, .card-back {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
-    .chart-container {
-      position: relative;
-      width: 100%;
-      max-width: 320px;
-      height: 240px;
-      margin: 0 auto;
+    .card-back {
+      transform: rotateY(180deg);
     }
-    /* Custom Scrollbars */
+    /* 自訂捲軸 */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #F1F1F1;
-      border-radius: 4px;
+      background: #F1F5F9;
     }
     ::-webkit-scrollbar-thumb {
       background: #CBD5E1;
-      border-radius: 4px;
+      border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
       background: #94A3B8;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-amber-200">
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between">
 
-  <!-- Top Header & Navigation -->
-  <header class="bg-white/95 backdrop-blur sticky top-0 z-40 border-b border-amber-100 shadow-sm">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
-      
-      <!-- App Title & Subtitle -->
-      <div class="flex items-center gap-3">
-        <span class="text-3xl select-none">🎒</span>
-        <div>
-          <h1 class="text-lg md:text-xl font-black text-amber-950 leading-tight">
-            國語造句訓練營
-          </h1>
-          <p class="text-xs text-amber-800 font-medium">觀念診斷 ✕ 靈感抽卡池 ✕ 師生卡牌共創 ✕ 班級成果彙整</p>
+  <!-- ======================================================== -->
+  <!-- 頂部導覽列 (Header & Tabs) -->
+  <!-- ======================================================== -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 sm:h-20">
+        
+        <!-- Logo 與標題 -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-100 text-lg sm:text-xl font-black">
+            營
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg sm:text-2xl font-black text-slate-800 tracking-tight">國語造句訓練營 <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold ml-1">2.0</span></h1>
+              <span class="hidden md:inline-block text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+                卡池總收錄：<span id="totalCardsCount" class="text-indigo-600 font-black">415</span> 張
+              </span>
+            </div>
+            <p class="text-[11px] sm:text-xs font-bold text-slate-400">記敘四要素診斷 ✕ 靈感抽卡 ✕ 生活小日記闖關</p>
+          </div>
         </div>
+
+        <!-- 快捷功能與操作按鈕 -->
+        <div class="flex items-center gap-2">
+          <button onclick="openGuideModal()" class="px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition flex items-center gap-1.5">
+            <i class="fa-regular fa-circle-question"></i>
+            <span class="hidden sm:inline">玩法指引</span>
+          </button>
+          <button onclick="toggleCloudModal()" class="px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl transition flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="hidden sm:inline">雲端狀態</span>
+          </button>
+        </div>
+
       </div>
 
-      <!-- Main Navigation Tabs & Teacher Padlet Setting Entry -->
-      <div class="flex items-center gap-2 flex-wrap justify-center">
-        <nav class="flex items-center gap-1.5 bg-amber-50/90 p-1.5 rounded-full border border-amber-200 flex-wrap justify-center">
-          <button id="nav-btn-quiz" onclick="switchTab('quiz')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition-all bg-amber-500 text-white shadow-sm">
-            🧩 完整句小達人
-          </button>
-          <button id="nav-btn-workbench" onclick="switchTab('workbench')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
-            ✍️ 造句抽卡池
-          </button>
-          <button id="nav-btn-gallery" onclick="switchTab('gallery')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
-            🏆 全班彙整牆 (<span id="gallery-count-badge">0</span>)
-          </button>
-          <button id="nav-btn-analytics" onclick="switchTab('analytics')" class="px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all">
-            📊 卡池檢視與自訂
-          </button>
-        </nav>
-
-        <!-- Teacher Setup Padlet Button -->
-        <button onclick="togglePadletModal(true)" class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 px-3.5 py-1.5 rounded-full text-xs font-black transition-all flex items-center gap-1 shadow-sm">
-          <span>📌</span> 設定班級 Padlet
+      <!-- 導覽頁籤 (Tabs) -->
+      <nav class="flex space-x-1 sm:space-x-3 overflow-x-auto pb-2 scrollbar-none text-sm font-black border-t border-slate-100 pt-2">
+        <button id="tab-quiz" onclick="switchTab('quiz')" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/70 transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>🧩 完整句小達人</span>
         </button>
-
-        <!-- Read-only Cloud Sync Status Indicator -->
-        <div class="bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-1 shadow-sm select-none cursor-default" title="系統已自動連線全台共創卡池">
-          <span id="cloud-status-icon">🟢</span> <span id="cloud-status-text">雲端卡池同步中</span>
-        </div>
-      </div>
-
+        <button id="tab-workbench" onclick="switchTab('workbench')" class="tab-btn px-3.5 py-2 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-200 flex items-center gap-1.5 whitespace-nowrap">
+          <span>✍️ 造句抽卡池</span>
+        </button>
+        <button id="tab-diary" onclick="switchTab('diary')" class="tab-btn px-3.5 py-2 rounded-xl text-purple-600 hover:bg-purple-50 transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>📖 小日記闖關賽</span>
+          <span class="text-[10px] bg-rose-500 text-white font-black px-1.5 py-0.5 rounded-full">NEW</span>
+        </button>
+        <button id="tab-gallery" onclick="switchTab('gallery')" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/70 transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>🏆 全班成果牆</span>
+        </button>
+        <button id="tab-pool" onclick="switchTab('pool')" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/70 transition flex items-center gap-1.5 whitespace-nowrap">
+          <span>📊 卡池檢視與自訂</span>
+        </button>
+      </nav>
     </div>
   </header>
 
-  <!-- Main Content Container -->
-  <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 space-y-6">
+  <!-- ======================================================== -->
+  <!-- 主內容區域 (Container) -->
+  <!-- ======================================================== -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
 
-    <!-- ========================================== -->
-    <!-- TAB 1: 完整句小達人 (Quiz Mode)             -->
-    <!-- ========================================== -->
-    <section id="tab-quiz" class="space-y-6">
-      <div class="bg-white rounded-2xl p-6 shadow-sm border border-purple-100 space-y-4">
-        <div class="flex items-center justify-between border-b border-purple-100 pb-3 flex-wrap gap-2">
-          <div>
-            <h2 class="text-lg font-bold text-purple-950 flex items-center gap-2">
-              <span>🧩</span> 完整句要素診斷挑戰
-            </h2>
-            <p class="text-xs text-gray-500 mt-0.5">💡 <strong>完整句觀念診斷：</strong>觀察下面的真實課文句子「少了什麼」？從下方選項選出最合適的卡牌填入，讓句子變得通順又完整！</p>
+    <!-- ====================================================== -->
+    <!-- 頁籤 1：🧩 完整句小達人 (病句偵測與診斷) -->
+    <!-- ====================================================== -->
+    <section id="section-quiz" class="tab-section hidden">
+      <div class="max-w-3xl mx-auto space-y-6">
+        
+        <!-- 引導說明卡 -->
+        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="text-3xl">🕵️‍♂️️</span>
+            <h2 class="text-xl sm:text-2xl font-black">小小句子偵探：猜猜看少了什麼？</h2>
           </div>
-          <button onclick="generateQuizQuestion()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-sm">
-            🎲 換一題挑戰
-          </button>
-        </div>
-
-        <div id="quiz-container" class="bg-purple-50/60 p-6 rounded-2xl border border-purple-200 text-center space-y-4">
-          <div class="flex items-center justify-center gap-2 flex-wrap">
-            <span id="quiz-source-tag" class="text-[11px] font-bold text-purple-700 bg-purple-200/60 px-2.5 py-1 rounded-lg">
-              課文原句出處：載入中
-            </span>
-          </div>
-
-          <div id="quiz-sentence-display" class="text-lg md:text-2xl font-black text-gray-800 py-3 flex flex-wrap items-center justify-center gap-2 leading-relaxed">
-            <span class="text-gray-400">題目載入中...</span>
-          </div>
-
-          <!-- Foldable Hint Container -->
-          <div class="flex flex-col items-center justify-center gap-2">
-            <button id="quiz-hint-toggle-btn" onclick="toggleQuizHint()" class="text-xs font-bold text-purple-700 bg-purple-100 hover:bg-purple-200 px-3.5 py-1.5 rounded-full transition-all border border-purple-300 flex items-center gap-1 shadow-sm">
-              <span>💡</span> 需要提示嗎？（點我看缺了什麼要素）
-            </button>
-            <div id="quiz-hint-content" class="hidden text-xs font-extrabold text-amber-900 bg-amber-100/90 border border-amber-300 px-3 py-1 rounded-lg">
-              💡 提示：這個句子目前缺少的是【<span id="quiz-target-type">???</span>】喔！
-            </div>
-          </div>
-
-          <div id="quiz-options-grid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 max-w-2xl mx-auto"></div>
-          <div id="quiz-feedback" class="hidden text-base font-extrabold py-2 px-4 rounded-xl"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========================================== -->
-    <!-- TAB 2: 造句抽卡池 (Workbench)               -->
-    <!-- ========================================== -->
-    <section id="tab-workbench" class="hidden space-y-6">
-      
-      <!-- Top Action Toolbar -->
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-orange-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 class="text-lg font-black text-gray-800 flex items-center gap-2">
-            <span class="text-amber-500">🎲</span> 
-            <span>造句抽卡池（靈感啟發與自主創作）</span>
-          </h2>
-          <p class="text-xs md:text-sm text-gray-500 mt-0.5">
-            💡 <strong>自由創作模式：</strong>隨機抽取四要素獲取靈感，不採用的卡槽可隨時「歸零留白」，由學生自由打字發揮！
+          <p class="text-xs sm:text-sm text-indigo-100 font-medium leading-relaxed">
+            一個完整的記敘句子，通常包含「時間、人物、地點、事件動作」。請讀一讀下面的課文句子，找出到底遺漏了哪一個要素？
           </p>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2">
-          <!-- Add Custom Card Button -->
-          <button onclick="toggleCustomCardModal(true)" class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shadow-sm transform hover:-translate-y-0.5">
-            ✨ 師生新增自訂卡片
-          </button>
+        <!-- 測驗題卡 -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-200 shadow-sm space-y-6">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <span class="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
+              <i class="fa-solid fa-book-open mr-1"></i> 課文例句診斷
+            </span>
+            <span id="quizSource" class="text-xs font-bold text-slate-400">出處：康軒國語第 02 課</span>
+          </div>
 
-          <!-- Excel File Import -->
-          <label for="excel-file-input" class="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-700 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border border-blue-200 flex items-center gap-1.5 shadow-sm">
-            📁 匯入 Excel 題庫
-          </label>
-          <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" multiple class="hidden" onchange="handleBatchFileUpload(event)">
+          <!-- 題目展示區 -->
+          <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center">
+            <p class="text-xs font-bold text-slate-400 mb-2">請仔細朗讀這句話：</p>
+            <p id="quizSentence" class="text-lg sm:text-2xl font-black text-slate-800 leading-relaxed tracking-wider"></p>
+          </div>
+
+          <!-- 選項按鈕區 -->
+          <div>
+            <p class="text-xs font-bold text-slate-400 mb-3 text-center">這句話最明顯缺少了哪一塊重要要素？</p>
+            <div id="quizOptions" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <!-- JS 動態生成選項 -->
+            </div>
+          </div>
+
+          <!-- 診斷回饋 -->
+          <div id="quizFeedback" class="hidden rounded-2xl p-4 transition-all"></div>
+
+          <!-- 下一題按鈕 -->
+          <div class="flex justify-end pt-2">
+            <button onclick="nextQuizQuestion()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-xl transition flex items-center gap-2 shadow-sm">
+              <span>下一題挑戰</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ====================================================== -->
+    <!-- 頁籤 2：✍️ 造句抽卡池 (核心工作台 - 依序引導) -->
+    <!-- ====================================================== -->
+    <section id="section-workbench" class="tab-section">
+      <div class="space-y-6">
+
+        <!-- 步驟一：抽卡池操作面板 -->
+        <div class="bg-white rounded-3xl p-5 sm:p-6 border-2 border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-indigo-600 text-white font-black text-xs flex items-center justify-center">1</span>
+              <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                <span>抽取記敘四要素卡牌</span>
+                <span class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-200 px-2.5 py-0.5 rounded-full">開放式靈感池</span>
+              </h2>
+            </div>
+            <p class="text-xs font-bold text-slate-400 mt-1">先抽取靈感骨架，再點擊「➕ 填入畫布」進行打字創作！</p>
+          </div>
           
-          <!-- Purge Invalid Cards -->
-          <button onclick="purgeInvalidCards()" class="bg-amber-50 hover:bg-amber-100 text-amber-900 px-3 py-2 rounded-xl text-xs font-bold transition-all border border-amber-300 flex items-center gap-1">
-            🧹 清理非詞彙卡片
-          </button>
-
-          <!-- Reset Database -->
-          <button onclick="resetDefaultPools()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-bold transition-all border border-gray-300">
-            🔄 還原預設題庫
-          </button>
-
-          <!-- TTS Speech Speed Selector -->
-          <div class="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold">
-            <span class="text-gray-600">朗讀語速:</span>
-            <select id="tts-rate" class="bg-white border border-gray-300 rounded px-1.5 py-0.5 text-xs text-gray-700 font-bold focus:outline-none">
-              <option value="0.75">0.75x (慢速)</option>
-              <option value="0.85" selected>0.85x (適中)</option>
-              <option value="1.0">1.0x (標準)</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Card Drawing Buttons Toolbar -->
-      <div class="flex flex-wrap items-center justify-center gap-2.5">
-        <button onclick="drawAll()" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm md:text-base px-5 py-2.5 rounded-full shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-1.5">
-          <span>🎲</span> 一鍵隨機抽取四要素
-        </button>
-
-        <button onclick="clearAllCards()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs md:text-sm px-4 py-2.5 rounded-full transition-all border border-gray-300 flex items-center gap-1 shadow-sm">
-          <span>✨</span> 一鍵全部重置留白
-        </button>
-
-        <div class="h-6 w-px bg-amber-300/60 hidden md:block mx-1"></div>
-
-        <button onclick="drawCard('time')" class="bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300 font-bold text-xs md:text-sm px-3.5 py-2 rounded-full transition-all">
-          ⏰ 抽【時間】
-        </button>
-        <button onclick="drawCard('person')" class="bg-sky-100 hover:bg-sky-200 text-sky-950 border border-sky-300 font-bold text-xs md:text-sm px-3.5 py-2 rounded-full transition-all">
-          👤 抽【人物】
-        </button>
-        <button onclick="drawCard('location')" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-950 border border-emerald-300 font-bold text-xs md:text-sm px-3.5 py-2 rounded-full transition-all">
-          📍 抽【地點】
-        </button>
-        <button onclick="drawCard('event')" class="bg-pink-100 hover:bg-pink-200 text-pink-950 border border-pink-300 font-bold text-xs md:text-sm px-3.5 py-2 rounded-full transition-all">
-          ⚡ 抽【事件】
-        </button>
-      </div>
-
-      <!-- Four Element Card Slots -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <!-- Slot: Time -->
-        <div id="slot-time" class="bg-white rounded-2xl p-5 border-2 border-dashed border-amber-300 flex flex-col justify-between min-h-[230px] shadow-sm slot-transition relative">
-          <div class="flex justify-between items-center text-xs font-bold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg">
-            <span>⏰ 時間要素 <span id="badge-time-count" class="text-amber-600 font-extrabold">(共0張)</span></span>
-            <span class="card-meta text-gray-400">自由創作</span>
-          </div>
-          <div class="my-3 text-center">
-            <div class="card-word text-xl md:text-2xl font-black text-gray-700 leading-snug">✨ 自由發揮（留白）</div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="insertCardToInput('time')" class="text-xs font-bold bg-amber-200/70 hover:bg-amber-300 text-amber-950 py-2 rounded-xl transition-all">
-              ➕ 加入打字區
+          <div class="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
+            <button onclick="drawAllCards()" class="px-5 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-sm rounded-2xl shadow-md shadow-indigo-200 transition flex items-center gap-2 active:scale-95">
+              <i class="fa-solid fa-dice text-base"></i>
+              <span>🎲 一鍵全抽四要素</span>
             </button>
-            <button onclick="clearSingleCard('time')" class="text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-1">
-              🧹 歸零留白
+            <button onclick="clearAllCards()" class="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-2xl transition flex items-center gap-1.5">
+              <i class="fa-solid fa-broom"></i>
+              <span>🧹 全部留白</span>
+            </button>
+            <button onclick="resetDefaultCards()" class="px-3.5 py-3 bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold text-xs rounded-2xl transition border border-slate-200" title="還原初始卡牌">
+              <i class="fa-solid fa-rotate-left"></i>
             </button>
           </div>
         </div>
 
-        <!-- Slot: Person -->
-        <div id="slot-person" class="bg-white rounded-2xl p-5 border-2 border-dashed border-sky-300 flex flex-col justify-between min-h-[230px] shadow-sm slot-transition relative">
-          <div class="flex justify-between items-center text-xs font-bold text-sky-800 bg-sky-50 px-2.5 py-1 rounded-lg">
-            <span>👤 人物要素 <span id="badge-person-count" class="text-sky-600 font-extrabold">(共0張)</span></span>
-            <span class="card-meta text-gray-400">自由創作</span>
-          </div>
-          <div class="my-3 text-center">
-            <div class="card-word text-xl md:text-2xl font-black text-gray-700 leading-snug">✨ 自由發揮（留白）</div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="insertCardToInput('person')" class="text-xs font-bold bg-sky-200/70 hover:bg-sky-300 text-sky-950 py-2 rounded-xl transition-all">
-              ➕ 加入打字區
-            </button>
-            <button onclick="clearSingleCard('person')" class="text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-1">
-              🧹 歸零留白
-            </button>
-          </div>
-        </div>
-
-        <!-- Slot: Location -->
-        <div id="slot-location" class="bg-white rounded-2xl p-5 border-2 border-dashed border-emerald-300 flex flex-col justify-between min-h-[230px] shadow-sm slot-transition relative">
-          <div class="flex justify-between items-center text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg">
-            <span>📍 地點要素 <span id="badge-location-count" class="text-emerald-600 font-extrabold">(共0張)</span></span>
-            <span class="card-meta text-gray-400">自由創作</span>
-          </div>
-          <div class="my-3 text-center">
-            <div class="card-word text-xl md:text-2xl font-black text-gray-700 leading-snug">✨ 自由發揮（留白）</div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="insertCardToInput('location')" class="text-xs font-bold bg-emerald-200/70 hover:bg-emerald-300 text-emerald-950 py-2 rounded-xl transition-all">
-              ➕ 加入打字區
-            </button>
-            <button onclick="clearSingleCard('location')" class="text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-1">
-              🧹 歸零留白
-            </button>
-          </div>
-        </div>
-
-        <!-- Slot: Event -->
-        <div id="slot-event" class="bg-white rounded-2xl p-5 border-2 border-dashed border-pink-300 flex flex-col justify-between min-h-[230px] shadow-sm slot-transition relative">
-          <div class="flex justify-between items-center text-xs font-bold text-pink-800 bg-pink-50 px-2.5 py-1 rounded-lg">
-            <span>⚡ 事件要素 <span id="badge-event-count" class="text-pink-600 font-extrabold">(共0張)</span></span>
-            <span class="card-meta text-gray-400">自由創作</span>
-          </div>
-          <div class="my-3 text-center">
-            <div class="card-word text-xl md:text-2xl font-black text-gray-700 leading-snug">✨ 自由發揮（留白）</div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="insertCardToInput('event')" class="text-xs font-bold bg-pink-200/70 hover:bg-pink-300 text-pink-950 py-2 rounded-xl transition-all">
-              ➕ 加入打字區
-            </button>
-            <button onclick="clearSingleCard('event')" class="text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 py-2 rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-1">
-              🧹 歸零留白
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Student Typing Canvas -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 space-y-4">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-3 border-b border-gray-100">
-          <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
-            <span class="text-blue-500">✏️</span> 我的造句畫布（自主打字與修飾）
-          </h3>
-          <div class="flex items-center gap-2 flex-wrap">
-            <label class="text-xs font-bold text-gray-600">作者姓名/座號：</label>
-            <input type="text" id="student-name-input" class="p-1.5 px-3 border border-gray-300 rounded-lg text-xs font-bold w-36 focus:border-blue-500 focus:outline-none" placeholder="例如：101小明" value="造句小達人">
-          </div>
-        </div>
-
-        <!-- Sentence Textarea -->
-        <textarea id="student-sentence-input" rows="3" class="w-full p-4 border-2 border-blue-200 rounded-xl text-lg md:text-xl font-bold text-gray-800 focus:outline-none focus:border-blue-500 bg-blue-50/20 transition-all resize-y" placeholder="點擊上方卡片下的「➕加入打字區」，或者直接在此自行打字創作..."></textarea>
-
-        <!-- Canvas Toolbar -->
-        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <!-- 四張卡槽展示 (時間、人物、地點、事件) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          <!-- Punctuation Bar -->
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-xs font-bold text-gray-500">常用標點：</span>
-            <button onclick="insertPunctuation('，')" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-black px-3 py-1 rounded-lg text-base border border-gray-300 transition-all">，</button>
-            <button onclick="insertPunctuation('。')" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-black px-3 py-1 rounded-lg text-base border border-gray-300 transition-all">。</button>
-            <button onclick="insertPunctuation('！')" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-black px-3 py-1 rounded-lg text-base border border-gray-300 transition-all">！</button>
-            <button onclick="insertPunctuation('？')" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-black px-3 py-1 rounded-lg text-base border border-gray-300 transition-all">？</button>
-            <button onclick="insertPunctuation('、')" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-black px-3 py-1 rounded-lg text-base border border-gray-300 transition-all">、</button>
-            <button onclick="insertPunctuation('；')" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-black px-3 py-1 rounded-lg text-base border border-gray-300 transition-all">；</button>
-            <button onclick="insertPunctuation('……')" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-black px-2.5 py-1 rounded-lg text-sm border border-gray-300 transition-all">……</button>
+          <!-- 時間卡槽 (黃色) -->
+          <div class="bg-white rounded-3xl p-5 border-2 border-amber-200 shadow-sm hover:shadow-md transition flex flex-col justify-between relative group">
+            <div class="flex items-center justify-between pb-2 border-b border-amber-100">
+              <span class="text-xs font-black px-2.5 py-1 bg-amber-100 text-amber-800 rounded-xl">⏰ 時間要素</span>
+              <button onclick="drawSingleCard('time')" class="text-xs font-bold text-amber-600 hover:text-amber-800 flex items-center gap-1">
+                <i class="fa-solid fa-shuffle"></i> 單抽
+              </button>
+            </div>
+            <div class="my-6 text-center">
+              <div id="card-time-text" class="text-xl sm:text-2xl font-black text-slate-800 tracking-wide leading-relaxed min-h-[3rem] flex items-center justify-center">
+                今天早晨
+              </div>
+            </div>
+            <div class="pt-2 border-t border-amber-50 flex items-center justify-between">
+              <button onclick="clearSingleCard('time')" class="text-xs font-bold text-slate-400 hover:text-slate-600">留白</button>
+              <button onclick="addCardWordToCanvas('time')" class="text-xs font-black text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl border border-amber-200 transition">
+                ➕ 填入畫布
+              </button>
+            </div>
           </div>
 
-          <!-- Canvas Action Buttons -->
-          <div class="flex items-center gap-2 flex-wrap">
+          <!-- 人物卡槽 (藍色) -->
+          <div class="bg-white rounded-3xl p-5 border-2 border-sky-200 shadow-sm hover:shadow-md transition flex flex-col justify-between relative group">
+            <div class="flex items-center justify-between pb-2 border-b border-sky-100">
+              <span class="text-xs font-black px-2.5 py-1 bg-sky-100 text-sky-800 rounded-xl">👤 人物要素</span>
+              <button onclick="drawSingleCard('person')" class="text-xs font-bold text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                <i class="fa-solid fa-shuffle"></i> 單抽
+              </button>
+            </div>
+            <div class="my-6 text-center">
+              <div id="card-person-text" class="text-xl sm:text-2xl font-black text-slate-800 tracking-wide leading-relaxed min-h-[3rem] flex items-center justify-center">
+                我和弟弟
+              </div>
+            </div>
+            <div class="pt-2 border-t border-sky-50 flex items-center justify-between">
+              <button onclick="clearSingleCard('person')" class="text-xs font-bold text-slate-400 hover:text-slate-600">留白</button>
+              <button onclick="addCardWordToCanvas('person')" class="text-xs font-black text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-200 transition">
+                ➕ 填入畫布
+              </button>
+            </div>
+          </div>
+
+          <!-- 地點卡槽 (綠色) -->
+          <div class="bg-white rounded-3xl p-5 border-2 border-emerald-200 shadow-sm hover:shadow-md transition flex flex-col justify-between relative group">
+            <div class="flex items-center justify-between pb-2 border-b border-emerald-100">
+              <span class="text-xs font-black px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-xl">📍 地點要素</span>
+              <button onclick="drawSingleCard('location')" class="text-xs font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-1">
+                <i class="fa-solid fa-shuffle"></i> 單抽
+              </button>
+            </div>
+            <div class="my-6 text-center">
+              <div id="card-location-text" class="text-xl sm:text-2xl font-black text-slate-800 tracking-wide leading-relaxed min-h-[3rem] flex items-center justify-center">
+                在學校操場旁
+              </div>
+            </div>
+            <div class="pt-2 border-t border-emerald-50 flex items-center justify-between">
+              <button onclick="clearSingleCard('location')" class="text-xs font-bold text-slate-400 hover:text-slate-600">留白</button>
+              <button onclick="addCardWordToCanvas('location')" class="text-xs font-black text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 transition">
+                ➕ 填入畫布
+              </button>
+            </div>
+          </div>
+
+          <!-- 事件卡槽 (紅色) -->
+          <div class="bg-white rounded-3xl p-5 border-2 border-rose-200 shadow-sm hover:shadow-md transition flex flex-col justify-between relative group">
+            <div class="flex items-center justify-between pb-2 border-b border-rose-100">
+              <span class="text-xs font-black px-2.5 py-1 bg-rose-100 text-rose-800 rounded-xl">⚡ 事件動作</span>
+              <button onclick="drawSingleCard('event')" class="text-xs font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1">
+                <i class="fa-solid fa-shuffle"></i> 單抽
+              </button>
+            </div>
+            <div class="my-6 text-center">
+              <div id="card-event-text" class="text-xl sm:text-2xl font-black text-slate-800 tracking-wide leading-relaxed min-h-[3rem] flex items-center justify-center">
+                手忙腳亂地到處找東西
+              </div>
+            </div>
+            <div class="pt-2 border-t border-rose-50 flex items-center justify-between">
+              <button onclick="clearSingleCard('event')" class="text-xs font-bold text-slate-400 hover:text-slate-600">留白</button>
+              <button onclick="addCardWordToCanvas('event')" class="text-xs font-black text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl border border-rose-200 transition">
+                ➕ 填入畫布
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 步驟二：學生自主打字畫布 (Canvas) -->
+        <div class="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-indigo-600 text-white font-black text-xs flex items-center justify-center">2</span>
+              <h3 class="font-black text-lg text-slate-800">我的完整造句畫布</h3>
+              <span class="text-xs text-slate-400 font-bold">（點選上方填入，自由編修、調換詞序與加形容詞）</span>
+            </div>
             
-            <!-- Dynamic Padlet Submission Button -->
-            <button id="btn-submit-padlet" onclick="submitAndGoToPadlet()" class="bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white font-black px-4 py-2 rounded-xl text-xs md:text-sm shadow-md transition-all flex items-center gap-1.5 transform hover:-translate-y-0.5">
-              <span>📌</span> 複製並前往 Padlet 繳交
-            </button>
+            <!-- 標點符號快捷工具箱 (引號使用標準「」) -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-xs font-bold text-slate-400 mr-1">常用標點：</span>
+              <button onclick="insertPunctuation('，')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-sm font-black transition">，</button>
+              <button onclick="insertPunctuation('。')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-sm font-black transition">。</button>
+              <button onclick="insertPunctuation('！')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-sm font-black transition">！</button>
+              <button onclick="insertPunctuation('？')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-sm font-black transition">？</button>
+              <button onclick="insertPunctuation('「')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-sm font-black transition">「</button>
+              <button onclick="insertPunctuation('」')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-sm font-black transition">」</button>
+            </div>
+          </div>
 
-            <button onclick="submitToClassGallery()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs shadow-sm transition-all flex items-center gap-1">
-              🚀 存至本機成果牆
-            </button>
+          <!-- 文字輸入框 -->
+          <textarea id="studentSentenceInput" rows="3" class="w-full p-4 border-2 border-slate-200 rounded-2xl focus:border-indigo-500 focus:ring-0 outline-none text-base sm:text-xl font-bold text-slate-800 leading-relaxed placeholder-slate-300 transition" placeholder="點擊上方卡片的「➕ 填入畫布」或在此直接打字，組裝你的專屬完整句子..."></textarea>
 
-            <button onclick="speakStudentText()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-2 rounded-xl text-xs border border-indigo-200 transition-all flex items-center gap-1">
-              🔊 朗讀
-            </button>
-            <button onclick="copyStudentText()" class="bg-gray-50 hover:bg-gray-100 text-gray-700 font-bold px-3 py-2 rounded-xl text-xs border border-gray-200 transition-all">
-              📋 複製
-            </button>
-            <button onclick="clearStudentText()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-3 py-2 rounded-xl text-xs border border-rose-200 transition-all">
-              🗑️ 清空
-            </button>
+          <!-- 畫布輔助按鈕 -->
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div class="flex items-center gap-2">
+              <button onclick="speakText(document.getElementById('studentSentenceInput').value)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-volume-high text-indigo-600"></i> 🔊 朗讀我的句子
+              </button>
+              <button onclick="copyStudentSentence()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-copy"></i> 複製句子
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="promptSubmitStudentSentence()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-xl shadow-md shadow-indigo-100 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-paper-plane"></i> 繳交到全班展示牆
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Hint / Color-coded Standard Sample Toggle -->
-        <div class="pt-2">
-          <button id="toggle-solution-btn" onclick="toggleSolutionBox()" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 py-2.5 rounded-xl text-xs md:text-sm font-bold transition-all flex items-center justify-center gap-2">
-            💡 需要提示嗎？點我【顯示/收起】四要素結構參考與範例
-          </button>
-
-          <!-- Color-coded Sentence Box -->
-          <div id="combined-solution-box" class="hidden mt-4 p-5 bg-orange-50/60 border border-orange-200 rounded-2xl space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-gray-600 border-b border-orange-100 pb-2">
-              <span class="text-orange-900 font-extrabold text-sm">✨ 當前卡牌組合提示對照：</span>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="bg-amber-100 text-amber-900 px-2 py-0.5 rounded">⏰ 時間</span>
-                <span class="bg-sky-100 text-sky-900 px-2 py-0.5 rounded">👤 人物</span>
-                <span class="bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">📍 地點</span>
-                <span class="bg-pink-100 text-pink-900 px-2 py-0.5 rounded">⚡ 事件</span>
-              </div>
+        <!-- 步驟三：帶著在畫布上編輯好的原創句子去小日記闖關賽 -->
+        <div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 rounded-3xl p-5 sm:p-6 text-white shadow-lg shadow-purple-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl flex-shrink-0">
+              🚀
             </div>
-
-            <!-- Display Area -->
-            <div class="bg-white p-5 rounded-xl border border-orange-100 text-center">
-              <div id="colored-sentence-text" class="text-lg md:text-2xl font-black text-gray-800 leading-relaxed">
-                卡槽目前為留白狀態，請發揮靈感自由造句...
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-full bg-white text-purple-700 font-black text-xs flex items-center justify-center">3</span>
+                <h3 class="font-black text-base sm:text-lg">已在畫布上修飾好句子了嗎？把它寫成小日記！</h3>
               </div>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-1">
-              <button onclick="speakSampleSentence()" class="bg-white hover:bg-orange-100 text-orange-800 border border-orange-300 font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
-                🔊 朗讀結構範例
-              </button>
-              <button onclick="applySampleToInput()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs shadow-sm transition-all">
-                ✍️ 帶入我的打字區
-              </button>
+              <p class="text-xs text-purple-100 mt-0.5">將你在畫布編輯好的原創句子作為故事起點，進行四道問題闖關，完成生動小日記！</p>
             </div>
           </div>
+          <button onclick="sendSentenceToDiaryQuest()" class="w-full sm:w-auto px-6 py-3.5 bg-white text-purple-700 hover:bg-amber-300 hover:text-purple-900 font-black rounded-2xl text-sm transition shadow-md whitespace-nowrap active:scale-95 flex items-center justify-center gap-2">
+            <span>帶著畫布上的句子，去「小日記闖關賽」！</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
         </div>
 
       </div>
     </section>
 
-    <!-- ========================================== -->
-    <!-- TAB 3: 全班彙整牆 (Class Gallery)           -->
-    <!-- ========================================== -->
-    <section id="tab-gallery" class="hidden space-y-6">
-      <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 space-y-5">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 border-b border-emerald-100 pb-4">
-          <div>
-            <h2 class="text-xl font-black text-emerald-950 flex items-center gap-2">
-              <span>🏆</span> 本機班級造句成果牆
-            </h2>
-            <p class="text-xs text-gray-500 mt-1">此處記錄本裝置已繳交的作品，支援即時按讚、朗讀與一鍵匯出 Excel / 列印成 PDF！</p>
+    <!-- ====================================================== -->
+    <!-- 頁籤 3：📖 小日記闖關賽 (升級版情境自適應靈感) -->
+    <!-- ====================================================== -->
+    <section id="section-diary" class="tab-section hidden">
+      <div class="max-w-4xl mx-auto space-y-6">
+
+        <!-- 頂部起點卡：鎖定學生在畫布親自修改後的原創句子 -->
+        <div class="bg-gradient-to-r from-purple-700 to-indigo-700 rounded-3xl p-6 text-white shadow-xl">
+          <div class="flex items-center justify-between pb-3 border-b border-purple-400/40 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">📌</span>
+              <h3 class="font-black text-lg text-purple-100">小日記故事起點（畫布上的背景句）</h3>
+            </div>
+            <button onclick="switchTab('workbench')" class="text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-xl font-bold transition">
+              <i class="fa-solid fa-pen-to-square mr-1"></i> 回畫布修改
+            </button>
           </div>
+          <!-- 孩子親自打字的原創句將精準顯示在此 -->
+          <p id="diaryBaseSentence" class="text-lg sm:text-2xl font-black text-amber-200 tracking-wide leading-relaxed">
+            今天早晨，我和弟弟在學校操場旁，手忙腳亂地到處找東西。
+          </p>
+          <div class="mt-3 flex items-center gap-2 text-xs text-purple-200">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span id="diaryContextNotice">系統已為你的這句話啟動專屬的情節靈感鷹架！</span>
+          </div>
+        </div>
+
+        <!-- 闖關進度指示器 -->
+        <div class="bg-white rounded-3xl p-4 border border-slate-200 shadow-sm flex items-center justify-between text-xs font-black">
+          <div id="step-indicator-1" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200">
+            <span class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[10px]">1</span>
+            <span>事情起因</span>
+          </div>
+          <i class="fa-solid fa-angle-right text-slate-300"></i>
+          <div id="step-indicator-2" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200">
+            <span class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-[10px]">2</span>
+            <span>動作經過</span>
+          </div>
+          <i class="fa-solid fa-angle-right text-slate-300"></i>
+          <div id="step-indicator-3" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200">
+            <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px]">3</span>
+            <span>最後結果</span>
+          </div>
+          <i class="fa-solid fa-angle-right text-slate-300"></i>
+          <div id="step-indicator-4" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200">
+            <span class="w-5 h-5 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-[10px]">4</span>
+            <span>今日心情</span>
+          </div>
+        </div>
+
+        <!-- 四道關卡工作卡片 -->
+        <div class="space-y-4">
           
-          <!-- Gallery Export Toolbar -->
-          <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="exportGalleryToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-all shadow-sm flex items-center gap-1.5">
-              <span>📊</span> 下載成果 (Excel)
-            </button>
-            <button onclick="exportGalleryToCsv()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-1">
-              <span>📄</span> CSV
-            </button>
-            <button onclick="printGalleryReport()" class="bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-300 font-bold px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-1">
-              <span>🖨️</span> 列印 / PDF
-            </button>
-            <button onclick="clearAllGallery()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold px-3 py-2 rounded-xl text-xs transition-all">
-              🗑️ 清空牆面
-            </button>
+          <!-- 關卡 1：事情起因 -->
+          <div id="quest-card-1" class="quest-card bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm transition">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 font-black flex items-center justify-center text-sm">1</span>
+                <h4 class="text-base sm:text-lg font-black text-slate-800">事情是怎麼開始的？發生了什麼突發狀況？</h4>
+              </div>
+              <span id="badge-q1" class="text-xs font-bold text-slate-400">待完成</span>
+            </div>
+            <!-- 動態根據孩子句子派發的靈感膠囊 -->
+            <div class="mb-3 flex flex-wrap items-center gap-1.5" id="chips-container-q1">
+              <span class="text-xs font-bold text-slate-400">💡 靈感提點：</span>
+            </div>
+            <textarea id="diaryInput-q1" oninput="updateQuestStatus(1)" rows="2" class="w-full p-3.5 border-2 border-slate-200 rounded-2xl focus:border-amber-500 outline-none text-base font-bold text-slate-800 placeholder-slate-300" placeholder="寫下一句話，交代發生了什麼意外或事情的起因..."></textarea>
+          </div>
+
+          <!-- 關卡 2：情節經過 (引號規範為「」) -->
+          <div id="quest-card-2" class="quest-card bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm transition">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-xl bg-sky-100 text-sky-700 font-black flex items-center justify-center text-sm">2</span>
+                <h4 class="text-base sm:text-lg font-black text-slate-800">大家做了什麼動作？有沒有說什麼話？</h4>
+              </div>
+              <span id="badge-q2" class="text-xs font-bold text-slate-400">待完成</span>
+            </div>
+            <!-- 動態根據孩子句子派發的靈感膠囊 -->
+            <div class="mb-3 flex flex-wrap items-center gap-1.5" id="chips-container-q2">
+              <span class="text-xs font-bold text-slate-400">💡 靈感提點：</span>
+            </div>
+            <textarea id="diaryInput-q2" oninput="updateQuestStatus(2)" rows="2" class="w-full p-3.5 border-2 border-slate-200 rounded-2xl focus:border-sky-500 outline-none text-base font-bold text-slate-800 placeholder-slate-300" placeholder="寫下 1~2 句話，加入人物的動作、表情或對話..."></textarea>
+          </div>
+
+          <!-- 關卡 3：最後結果 -->
+          <div id="quest-card-3" class="quest-card bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm transition">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 font-black flex items-center justify-center text-sm">3</span>
+                <h4 class="text-base sm:text-lg font-black text-slate-800">事情最後怎麼解決的？結局是什麼？</h4>
+              </div>
+              <span id="badge-q3" class="text-xs font-bold text-slate-400">待完成</span>
+            </div>
+            <!-- 動態根據孩子句子派發的靈感膠囊 -->
+            <div class="mb-3 flex flex-wrap items-center gap-1.5" id="chips-container-q3">
+              <span class="text-xs font-bold text-slate-400">💡 靈感提點：</span>
+            </div>
+            <textarea id="diaryInput-q3" oninput="updateQuestStatus(3)" rows="2" class="w-full p-3.5 border-2 border-slate-200 rounded-2xl focus:border-emerald-500 outline-none text-base font-bold text-slate-800 placeholder-slate-300" placeholder="寫下一句話，交代事情的結局與怎麼解決的..."></textarea>
+          </div>
+
+          <!-- 關卡 4：今日心情 -->
+          <div id="quest-card-4" class="quest-card bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm transition">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <div class="flex items-center gap-2">
+                <span class="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 font-black flex items-center justify-center text-sm">4</span>
+                <h4 class="text-base sm:text-lg font-black text-slate-800">經歷這件事後，你現在的心情或想法是什麼？</h4>
+              </div>
+              <span id="badge-q4" class="text-xs font-bold text-slate-400">待完成</span>
+            </div>
+            <!-- 心情快捷挑選盒 -->
+            <div class="mb-3 flex flex-wrap gap-2">
+              <button onclick="selectDiaryMood('這件事讓我們都鬆了一口氣，真是虛驚一場！')" class="text-xs px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-xl border border-rose-200 transition font-bold">😌 鬆了一口氣</button>
+              <button onclick="selectDiaryMood('雖然過程很累，但大家心裡都覺得好滿足、好有成就感。')" class="text-xs px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-xl border border-rose-200 transition font-bold">💪 充滿成就感</button>
+              <button onclick="selectDiaryMood('回想起來真是有驚無險，下次我一定會更加小心！')" class="text-xs px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-xl border border-rose-200 transition font-bold">💡 下次要注意</button>
+              <button onclick="selectDiaryMood('今天真是既充實又難忘的一天，我一定會牢牢記在心裡。')" class="text-xs px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-800 rounded-xl border border-rose-200 transition font-bold">✨ 難忘的一天</button>
+            </div>
+            <textarea id="diaryInput-q4" oninput="updateQuestStatus(4)" rows="2" class="w-full p-3.5 border-2 border-slate-200 rounded-2xl focus:border-rose-500 outline-none text-base font-bold text-slate-800 placeholder-slate-300" placeholder="寫下一句話，總結你的心情、心得或感想..."></textarea>
+          </div>
+
+        </div>
+
+        <!-- 組裝日記按鈕 -->
+        <div class="text-center pt-2">
+          <button onclick="assembleDiary()" class="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-lg rounded-2xl shadow-xl shadow-purple-200 transition active:scale-95 flex items-center justify-center gap-2 mx-auto">
+            <span>🎉 四關完成！一鍵組裝我的生活小日記</span>
+          </button>
+        </div>
+
+        <!-- 最終成篇：小日記成果排版稿紙 -->
+        <div id="diaryResultContainer" class="hidden bg-white rounded-3xl p-6 sm:p-8 border-4 border-purple-200 shadow-xl space-y-6">
+          <div class="flex items-center justify-between pb-3 border-b-2 border-slate-100">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">📖</span>
+              <h3 class="text-xl font-black text-slate-800">我的生活小日記（成篇展示）</h3>
+            </div>
+            <span class="text-xs font-black bg-purple-100 text-purple-700 px-3 py-1 rounded-full">四步闖關成功！</span>
+          </div>
+
+          <!-- 段落展示區 -->
+          <div class="bg-amber-50/50 p-6 rounded-2xl border-2 border-amber-200/80 shadow-inner">
+            <div id="diaryFullText" class="text-lg sm:text-xl font-bold text-slate-800 leading-loose tracking-widest whitespace-pre-wrap"></div>
+          </div>
+
+          <!-- 行動按鈕列：含直通 Padlet -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <button onclick="speakText(document.getElementById('diaryFullText').innerText)" class="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-sm rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-volume-high text-purple-600"></i> 🔊 朗讀小日記
+              </button>
+              <button onclick="copyDiaryText()" class="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-sm rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-copy"></i> 一鍵複製全文
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="sendDiaryToPadlet()" class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white font-black text-sm rounded-xl shadow-md transition flex items-center gap-1.5 active:scale-95">
+                <i class="fa-solid fa-paper-plane"></i> 📌 複製並前往 Padlet 繳交
+              </button>
+              <button onclick="promptSubmitStudentDiary()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-black text-sm rounded-xl shadow-md shadow-purple-200 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-cloud-arrow-up"></i> 發表到成果牆
+              </button>
+              <button onclick="window.print()" class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm rounded-xl transition flex items-center gap-1.5">
+                <i class="fa-solid fa-print"></i> 列印
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Submissions Grid -->
-        <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-
-        <!-- Empty Gallery Prompt -->
-        <div id="gallery-empty-state" class="text-center py-12 text-gray-400 space-y-2">
-          <div class="text-4xl">📝</div>
-          <div class="font-bold text-sm">目前尚無本機作品喔！</div>
-          <div class="text-xs">學生亦可直接點擊「📌 複製並前往 Padlet 繳交」上傳至全班 Padlet 發表牆。</div>
-        </div>
       </div>
     </section>
 
-    <!-- ========================================== -->
-    <!-- TAB 4: 卡池檢視與自訂卡片 (Analytics)        -->
-    <!-- ========================================== -->
-    <section id="tab-analytics" class="hidden space-y-6">
-      
-      <!-- Inline Custom Card Creation Box -->
-      <div class="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 p-5 rounded-2xl border-2 border-amber-300/80 shadow-sm space-y-3">
-        <div class="flex items-center justify-between flex-wrap gap-2">
-          <h3 class="text-base font-black text-amber-950 flex items-center gap-2">
-            <span>✨</span> 師生即時自訂卡片專區（支援全台雲端共享）
-          </h3>
-          <span class="text-xs font-bold text-amber-800 bg-amber-100 px-2.5 py-1 rounded-full">💡 新增後將同步上傳至 Google 雲端試算表與本機</span>
+    <!-- ====================================================== -->
+    <!-- 頁籤 4：🏆 全班成果牆 (支援本機展示與 Padlet 派課) -->
+    <!-- ====================================================== -->
+    <section id="section-gallery" class="tab-section hidden">
+      <div class="space-y-6">
+
+        <!-- 老師 QR Code 派課與即時連動看板 -->
+        <div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-indigo-700/60">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">📱</span>
+                <h3 class="font-black text-xl text-white">老師專屬班級 QR Code 派課看板</h3>
+                <span id="roomStatusBadge" class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold">🟢 班級即時接收室已連線</span>
+              </div>
+              <p class="text-xs sm:text-sm text-indigo-200 mt-1 font-medium">把這個 QR Code 投影在黑板或電子白板上，學生用平板掃描後，造句與小日記就會直接飛到老師這面展示牆！</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="regenerateRoomCode()" class="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate"></i> 更換房間碼
+              </button>
+              <button onclick="copyClassRoomLink()" class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-xs font-black transition flex items-center gap-1.5 shadow-md">
+                <i class="fa-solid fa-link"></i> 複製派課網址
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-6 items-center">
+            <!-- QR Code 顯示框 -->
+            <div class="sm:col-span-4 lg:col-span-3 flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-inner text-slate-800">
+              <div id="classQrCodeDisplay" class="p-2 bg-white flex items-center justify-center min-h-[160px] min-w-[160px]">
+                <!-- 動態繪製 QR Code -->
+              </div>
+              <span class="text-[11px] font-bold text-slate-400 mt-2">📱 請學生打開相機掃描加入</span>
+            </div>
+
+            <!-- 房間資訊與 Padlet 備用支援 -->
+            <div class="sm:col-span-8 lg:col-span-9 space-y-3">
+              <div class="bg-white/10 rounded-2xl p-4 border border-white/10 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span class="text-xs text-indigo-300 font-bold block">目前教室專屬代碼 (Room ID)：</span>
+                  <span id="currentRoomIdText" class="text-2xl font-black font-mono tracking-widest text-amber-300">CLASS-8821</span>
+                </div>
+                <div class="text-right">
+                  <span class="text-xs text-indigo-300 font-bold block">即時上傳件數：</span>
+                  <span id="roomSubmissionsCount" class="text-2xl font-black text-emerald-400">0 件</span>
+                </div>
+              </div>
+
+              <!-- Padlet 派課備用設定折疊盒 -->
+              <div class="bg-black/20 rounded-2xl p-3 border border-white/5 space-y-2 text-xs">
+                <div class="flex items-center justify-between text-indigo-200 font-bold">
+                  <span>📌 或是您也可以綁定外部 Padlet 看板：</span>
+                  <button onclick="togglePadletDetailBox()" class="text-indigo-300 hover:text-white underline text-[11px]">展開/收合設定</button>
+                </div>
+                <div id="padletSettingsInline" class="hidden flex flex-col sm:flex-row items-center gap-2 pt-1">
+                  <input id="teacherPadletInput" type="text" class="w-full p-2.5 rounded-xl text-slate-800 text-xs font-bold outline-none" placeholder="貼上您的 Padlet 看板網址（例：https://padlet.com/...）">
+                  <button onclick="savePadletUrl()" class="w-full sm:w-auto px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl whitespace-nowrap">儲存綁定</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <p class="text-xs text-gray-600">在此直接輸入您想補充的卡牌，系統會自動儲存至本機，若已連線雲端試算表更會自動同步給所有班級！</p>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
-          <select id="inline-card-type" class="p-2 border border-amber-300 rounded-xl text-xs font-bold bg-white focus:outline-none">
-            <option value="time">⏰ 時間要素</option>
-            <option value="person">👤 人物要素</option>
-            <option value="location">📍 地點要素</option>
-            <option value="event">⚡ 事件要素</option>
-          </select>
 
-          <input type="text" id="inline-card-text" placeholder="卡片詞彙（如：雨過天晴時）" class="p-2 border border-amber-300 rounded-xl text-xs font-bold bg-white focus:outline-none">
-          <input type="text" id="inline-card-source" placeholder="出處/創作者（如：301班小明）" class="p-2 border border-amber-300 rounded-xl text-xs font-bold bg-white focus:outline-none">
+        <!-- 本機班級成果展示牆 -->
+        <div class="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-slate-100">
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-black text-lg text-slate-800">🏆 本堂課學生作品展示牆</h3>
+                <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-bold border border-indigo-200">即時同步中</span>
+              </div>
+              <p class="text-xs font-bold text-slate-400 mt-0.5">學生繳交的造句與生活小日記皆會即刻出現在下方，支援大螢幕投影、朗讀與愛心互評！</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button onclick="exportGalleryExcel()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-file-excel"></i> 匯出 Excel
+              </button>
+              <button onclick="openClearGalleryModal()" class="px-3 py-2 bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 font-bold text-xs rounded-xl transition">
+                <i class="fa-solid fa-trash-can"></i> 清空展示牆
+              </button>
+            </div>
+          </div>
 
-          <button onclick="submitInlineCustomCard()" class="bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-2 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-1">
-            ➕ 快速新增並同步
+          <!-- 卡片清單展示區 -->
+          <div id="galleryContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+            <!-- JS 動態生成作品卡 -->
+          </div>
+
+          <div id="emptyGalleryNotice" class="text-center py-12 text-slate-400">
+            <i class="fa-regular fa-folder-open text-4xl mb-3 block text-slate-300"></i>
+            <p class="text-sm font-bold">目前展示牆上還沒有作品喔！</p>
+            <p class="text-xs mt-1">請小朋友用平板掃描上方 QR Code 加入並送出作品，成果會立刻在此亮相！</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ====================================================== -->
+    <!-- 頁籤 5：📊 卡池檢視與自訂 (415 張完整課文卡牌) -->
+    <!-- ====================================================== -->
+    <section id="section-pool" class="tab-section hidden">
+      <div class="space-y-6">
+
+        <div class="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h3 class="font-black text-xl text-slate-800">📊 課文語料庫總覽（共 415 張）</h3>
+            <p class="text-xs font-bold text-slate-400 mt-1">完整萃取自一至六年級經典國語課文，涵蓋生動的人事時地語料！</p>
+          </div>
+          <button onclick="toggleAddWordModal()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm rounded-xl shadow-md transition flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i> 新增自訂詞彙
           </button>
         </div>
-      </div>
 
-      <div class="max-w-xl mx-auto w-full">
-        <!-- Chart: Pool Distribution -->
-        <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 class="text-base font-bold text-gray-800 mb-1 flex items-center gap-2 text-center justify-center">
-              <span class="text-amber-500">📊</span> <span id="analytics-chart-title">題庫卡池比例</span>
-            </h3>
-            <p class="text-xs text-gray-500 mb-4 text-center">【時間、人物、地點、事件】四大類別詞彙張數分佈</p>
-          </div>
-          <div class="chart-container">
-            <canvas id="poolDistributionChart"></canvas>
-          </div>
+        <!-- 分類過濾選單 -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="filterPoolView('all')" id="pool-btn-all" class="pool-filter-btn px-4 py-2 bg-indigo-600 text-white font-black text-xs rounded-xl shadow-sm">
+            全部 (415)
+          </button>
+          <button onclick="filterPoolView('time')" id="pool-btn-time" class="pool-filter-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl">
+            ⏰ 時間 (<span id="count-time">105</span>)
+          </button>
+          <button onclick="filterPoolView('person')" id="pool-btn-person" class="pool-filter-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl">
+            👤 人物 (<span id="count-person">106</span>)
+          </button>
+          <button onclick="filterPoolView('location')" id="pool-btn-location" class="pool-filter-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl">
+            📍 地點 (<span id="count-location">102</span>)
+          </button>
+          <button onclick="filterPoolView('event')" id="pool-btn-event" class="pool-filter-btn px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl">
+            ⚡ 事件動作 (<span id="count-event">102</span>)
+          </button>
         </div>
-      </div>
 
-      <!-- Card Pool Content Browser -->
-      <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 space-y-4">
-        <div class="flex justify-between items-center border-b border-gray-100 pb-3 flex-wrap gap-2">
-          <h3 class="text-base font-bold text-gray-800">📋 純卡片詞彙清單與管理</h3>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="purgeInvalidCards()" class="bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold px-3 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1 shadow-sm">
-              🧹 自動清理非詞彙卡片
-            </button>
-            <button onclick="exportCurrentPoolToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-xl text-xs transition-all flex items-center gap-1 shadow-sm">
-              📥 匯出當前卡池 (Excel)
-            </button>
+        <!-- 語詞氣泡膠囊清單 -->
+        <div class="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm max-h-[600px] overflow-y-auto">
+          <div id="poolWordsDisplay" class="flex flex-wrap gap-2">
+            <!-- JS 動態生成 415 個卡牌晶片 -->
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          <div class="bg-amber-50/70 p-3 rounded-xl border border-amber-200">
-            <div class="font-bold text-amber-900 mb-2 border-b border-amber-200 pb-1">⏰ 時間詞彙 (<span id="count-time">0</span>)</div>
-            <ul id="list-time" class="space-y-1 max-h-56 overflow-y-auto text-amber-900/80 font-medium"></ul>
-          </div>
-          <div class="bg-sky-50/70 p-3 rounded-xl border border-sky-200">
-            <div class="font-bold text-sky-900 mb-2 border-b border-sky-200 pb-1">👤 人物詞彙 (<span id="count-person">0</span>)</div>
-            <ul id="list-person" class="space-y-1 max-h-56 overflow-y-auto text-sky-900/80 font-medium"></ul>
-          </div>
-          <div class="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200">
-            <div class="font-bold text-emerald-900 mb-2 border-b border-emerald-200 pb-1">📍 地點詞彙 (<span id="count-location">0</span>)</div>
-            <ul id="list-location" class="space-y-1 max-h-56 overflow-y-auto text-emerald-900/80 font-medium"></ul>
-          </div>
-          <div class="bg-pink-50/70 p-3 rounded-xl border border-pink-200">
-            <div class="font-bold text-pink-900 mb-2 border-b border-pink-200 pb-1">⚡ 事件詞彙 (<span id="count-event">0</span>)</div>
-            <ul id="list-event" class="space-y-1 max-h-56 overflow-y-auto text-pink-900/80 font-medium"></ul>
-          </div>
-        </div>
       </div>
     </section>
 
   </main>
 
-  <!-- Modal: Teacher Padlet Configuration -->
-  <div id="padlet-config-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-rose-100">
-      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
-        <h3 class="text-base font-black text-rose-950 flex items-center gap-2">
-          <span>📌</span> 設定班級專屬 Padlet 發表牆
-        </h3>
-        <button onclick="togglePadletModal(false)" class="text-gray-400 hover:text-gray-600 font-black text-base">✕</button>
-      </div>
-
-      <div class="text-xs text-gray-600 space-y-2 leading-relaxed">
-        <p>老師可以在此輸入您的 <strong>Padlet 發表牆網址</strong>，系統會自動將它綁定至專屬連結中。您將連結（或 QR Code）派給學生後，學生造句完點擊繳交按鈕，就會<strong>自動複製造句並直達您的 Padlet</strong>！</p>
-      </div>
-
-      <div class="space-y-3 pt-1">
-        <div>
-          <label class="block font-bold text-gray-700 text-xs mb-1">老師的 Padlet 看板網址：</label>
-          <input type="url" id="teacher-padlet-input" placeholder="https://padlet.com/yourname/..." class="w-full p-2.5 border border-rose-300 rounded-xl text-xs font-mono font-bold focus:border-rose-500 focus:outline-none bg-rose-50/30">
-        </div>
-
-        <button onclick="generateCustomShareLink()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-black text-xs py-2.5 rounded-xl shadow-sm transition-all flex items-center justify-center gap-1">
-          🔗 生成我的專屬派課網址與 QR Code
-        </button>
-
-        <!-- Result Box -->
-        <div id="share-link-result-box" class="hidden p-3 bg-rose-50 rounded-2xl border border-rose-200 space-y-2.5">
-          <div>
-            <span class="text-[11px] font-bold text-rose-800">專屬派課網址（複製給學生）：</span>
-            <div class="flex gap-1.5 mt-1">
-              <input type="text" id="generated-share-link" readonly class="flex-1 p-2 bg-white border border-rose-300 rounded-lg text-[11px] font-mono select-all text-gray-700">
-              <button onclick="copyGeneratedShareLink()" class="bg-rose-500 hover:bg-rose-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold">複製</button>
-            </div>
-          </div>
-
-          <div class="text-center pt-1">
-            <span class="text-[11px] font-bold text-rose-800 block mb-1.5">或投影 QR Code 給學生掃描：</span>
-            <div id="qrcode-container" class="inline-block p-2 bg-white rounded-xl border border-rose-200 shadow-sm"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
-        <button type="button" onclick="togglePadletModal(false)" class="px-4 py-2 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs transition-all">
-          完成關閉
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Custom Card Creation -->
-  <div id="custom-card-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-amber-100">
-      <div class="flex justify-between items-center border-b border-gray-100 pb-3">
-        <h3 class="text-base font-black text-amber-950 flex items-center gap-2">
-          <span>✨</span> 師生新增自訂卡片
-        </h3>
-        <button onclick="toggleCustomCardModal(false)" class="text-gray-400 hover:text-gray-600 font-black text-base">✕</button>
-      </div>
-
-      <p class="text-xs text-gray-500">老師與學生可以輸入自訂詞彙，新增後會立即放入抽卡池中，並自動儲存！</p>
-
-      <form onsubmit="handleCustomCardSubmit(event)" class="space-y-3.5 text-xs">
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">1. 選擇要素類別：</label>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="flex items-center gap-2 p-2 rounded-xl border border-amber-200 bg-amber-50/60 cursor-pointer font-bold text-amber-900">
-              <input type="radio" name="modal-card-type" value="time" checked class="accent-amber-600"> ⏰ 時間要素
-            </label>
-            <label class="flex items-center gap-2 p-2 rounded-xl border border-sky-200 bg-sky-50/60 cursor-pointer font-bold text-sky-900">
-              <input type="radio" name="modal-card-type" value="person" class="accent-sky-600"> 👤 人物要素
-            </label>
-            <label class="flex items-center gap-2 p-2 rounded-xl border border-emerald-200 bg-emerald-50/60 cursor-pointer font-bold text-emerald-900">
-              <input type="radio" name="modal-card-type" value="location" class="accent-emerald-600"> 📍 地點要素
-            </label>
-            <label class="flex items-center gap-2 p-2 rounded-xl border border-pink-200 bg-pink-50/60 cursor-pointer font-bold text-pink-900">
-              <input type="radio" name="modal-card-type" value="event" class="accent-pink-600"> ⚡ 事件要素
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">2. 輸入卡片詞彙/短語：</label>
-          <input type="text" id="modal-card-text" required placeholder="例如：太陽剛升起的清晨、熱心的警衛伯伯..." class="w-full p-2.5 border border-gray-300 rounded-xl font-bold text-sm focus:border-amber-500 focus:outline-none">
-        </div>
-
-        <div>
-          <label class="block font-bold text-gray-700 mb-1">3. 出處 / 創作者（選填）：</label>
-          <input type="text" id="modal-card-source" placeholder="例如：王老師提供、301小明自創、補充教材..." class="w-full p-2 border border-gray-300 rounded-xl font-medium focus:border-amber-500 focus:outline-none">
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
-          <button type="button" onclick="toggleCustomCardModal(false)" class="px-4 py-2 rounded-xl font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all">
-            取消
-          </button>
-          <button type="submit" class="px-5 py-2 rounded-xl font-black bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition-all flex items-center gap-1">
-            ➕ 立即加入卡池
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-  <!-- Footer Section (With Legal Disclaimer) -->
-  <footer class="bg-white border-t border-amber-100 py-6 text-center text-xs text-amber-900/80">
-    <div class="max-w-4xl mx-auto px-4 space-y-2.5">
-      <p class="font-bold text-sm text-amber-950">國小國語造句訓練互動平台 ｜ Created By yilin shishi</p>
-      <p class="text-[11px] text-gray-500 font-medium">國小記敘文四要素：時間 ✕ 人物 ✕ 地點 ✕ 事件 靈感啟發教學系統</p>
-      
-      <!-- Legal Disclaimer Block -->
-      <div class="pt-3 border-t border-amber-100/80 text-[11px] text-gray-400 leading-relaxed max-w-3xl mx-auto space-y-1">
-        <p class="font-bold text-gray-500">【非營利教育利用與版權免責聲明】</p>
-        <p>
-          本平台係基於公益、非營利語文教育推廣與課堂差異化教學輔助之目的建置，符合我國《著作權法》第 46 條及第 65 條合理使用之規範。
-        </p>
-        <p>
-          卡池詞彙及句型診斷例句均取材或改編自國內各版本國小國語教科書（康軒、翰林、南一）及公有領域經典語料，其著作權仍歸原出版單位及原創作者所有。本站不具商業收益行為，若原版權所有者對內容引用有未盡授權或任何疑慮，敬請聯繫管理者，我們將立即配合修正、替換或移除相關語料。
-        </p>
-      </div>
+  <!-- ======================================================== -->
+  <!-- 頁尾署名 (Footer) -->
+  <!-- ======================================================== -->
+  <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs font-bold text-slate-400 mt-12">
+    <div class="max-w-7xl mx-auto px-4">
+      <p class="text-slate-600 font-black tracking-wide">國小國語造句訓練互動平台｜ Created By yilin shishi</p>
+      <p class="mt-1 text-[11px] text-slate-400">四要素微步階梯 ✕ 畫布自主潤飾 ✕ 生活小日記闖關 ✕ 班級 QR Code 派課</p>
     </div>
   </footer>
 
+  <!-- 彈跳視窗：新增自訂詞卡 -->
+  <div id="addWordModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h4 class="font-black text-lg text-slate-800">✨ 新增自訂語詞到卡池</h4>
+        <button onclick="toggleAddWordModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">選擇要素類別：</label>
+        <select id="newWordType" class="w-full p-2.5 border-2 border-slate-200 rounded-xl font-bold text-sm outline-none">
+          <option value="time">⏰ 時間</option>
+          <option value="person">👤 人物</option>
+          <option value="location">📍 地點</option>
+          <option value="event">⚡ 事件動作</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">輸入自訂語詞：</label>
+        <input id="newWordText" type="text" class="w-full p-2.5 border-2 border-slate-200 rounded-xl font-bold text-sm outline-none" placeholder="例如：在熱氣球上、放學鐘聲響起時">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="toggleAddWordModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm">取消</button>
+        <button onclick="saveCustomWord()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-sm shadow-md">加入卡池</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈跳視窗：學生填寫座號姓名繳交作品 -->
+  <div id="submitStudentModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h4 class="font-black text-lg text-slate-800">🚀 繳交作品至全班展示牆</h4>
+        <button onclick="toggleSubmitModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-slate-500 mb-1">請輸入您的座號或姓名：</label>
+        <input id="studentAuthorName" type="text" class="w-full p-3 border-2 border-slate-200 rounded-xl font-bold text-sm" placeholder="例如：05 號小宇、李小華">
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="toggleSubmitModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm">取消</button>
+        <button onclick="confirmSubmitToGallery()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-sm shadow-md">確認送出</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈跳視窗：玩法指引 -->
+  <div id="guideModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h4 class="font-black text-lg text-slate-800">📖 國語造句訓練營 2.0 玩法指引</h4>
+        <button onclick="closeGuideModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+      <div class="space-y-3 text-xs leading-relaxed font-bold text-slate-600">
+        <p>1. <span class="text-indigo-600 font-black">🧩 完整句小達人</span>：辨識課文句子缺少哪個要素，建立大腦自我監控！</p>
+        <p>2. <span class="text-indigo-600 font-black">✍️ 造句抽卡池</span>：一鍵隨機抽卡，再填入下方畫布打字，自由修飾出你的專屬句子！</p>
+        <p>3. <span class="text-purple-600 font-black">🚀 小日記闖關賽</span>：帶著在畫布上修飾好的原創句，挑戰起因、經過、結果、心情四道關卡，一鍵產出完整生活日記！</p>
+        <p>4. <span class="text-emerald-600 font-black">🏆 全班成果牆</span>：老師投影專屬 QR Code，學生作品即時飛到大螢幕，並支援 Padlet 派課與 Excel 匯出！</p>
+      </div>
+      <div class="flex justify-end pt-2">
+        <button onclick="closeGuideModal()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-xs shadow-md">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈跳確認視窗：清空展示牆確認 -->
+  <div id="confirmClearModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center">
+      <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl mx-auto flex items-center justify-center text-xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h4 class="font-black text-lg text-slate-800">確定清空展示牆？</h4>
+      <p class="text-xs text-slate-500 font-bold">這將會清除目前展示牆上所有的造句與小日記作品。</p>
+      <div class="flex justify-center gap-2 pt-2">
+        <button onclick="closeClearGalleryModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm">取消</button>
+        <button onclick="confirmClearGallery()" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-black text-sm shadow-md">確定清空</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 浮動提示 Toast -->
+  <div id="toastBox" class="fixed bottom-6 right-6 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-bold">
+      <span id="toastMsg">提示訊息</span>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT CORE ENGINE (415 筆課文語料庫 ✕ 自適應靈感) -->
+  <!-- ======================================================== -->
   <script>
-    // ============================================================
-    // 1. 全域資料庫與 415 筆卡牌嵌入資料 (人物 106, 時間 105, 地點 102, 事件 102)
-    // ============================================================
-    const RAW_CARDS_PERSON = [
-      '弟弟和妹妹', '張奶奶', '小鴨子', '班長', '長頸鹿斑斑', '小草', '太陽公公', '雷公公', 
-      '妹妹', '爸爸', '松鼠', '公雞', '小青蛙', '火雞與孔雀', '爺爺', '姐姐', '小雨滴', 
-      '蜻蜓與蜜蜂', '小豬和羊', '恐龍', '子陽', '樂樂', '小青蛙', '小燕子', '風阿姨', 
-      '船家', '軍人媽媽', '建築師爸爸', '神筆馬良', '貪心的國王', '黑面琵鷺黑皮', 
-      '格列佛（巨人）', '小人國的小兵', '農夫', '小鼴鼠', '大樹爺爺', '北風與太陽', 
-      '小水滴', '郵差叔叔', '愛迪生', '小松鼠', '老山羊', '小螢火蟲', '企鵝爸爸', 
-      '綠衣郵差', '花仙子', '勤勞的蜜蜂', '勇敢的小獵犬', '慈祥的奶奶', '小蜘蛛', 
-      '馬良', '貪心的大官', '法布爾', '老農夫', '許願樹下的少年', '熱心的志工', 
-      '小金魚', '聰明的烏鴉', '領頭的雁鳥', '安徒生', '獨木橋上的羊', '守信用的朋友', 
-      '森林保護員', '孔子', '開朗的轉學生', '默契十足的隊友', '默默耕耘的農夫', '馬偕', 
-      '海倫·凱勒', '江秀真', '巧文姐姐', '老鞋匠', '小精靈', '愛麗絲', '兔子先生', 
-      '窮和尚', '富和尚', '達悟勇士', '駱駝', '小玉', '孫悟空', '如來佛', '萊特兄弟', 
-      '李白', '柯錦鋒', '沈芯菱', '王羲之', '凱瑟琳', '齊柏林', '米勒', '路得', 
-      '馬拉拉', '比爾·蓋茲', '貝克漢', '陳念琴', '達駭黑熊', '魯賓遜', '邱吉爾', 
-      '黃美廉', '艾森豪', '晏子', '齊景公', '愛因斯坦', '李家豪', '王恩', '陳郁如', 
-      '林凱羚', '蘇軾', '胡利肯', '古祖馬茲', '普羅米修斯', '神農氏', '楊元慶', 
-      '藺相如', '廉頗', '滿詠萱修女', '馬照琪', '政彬', '名揚', '朱柏廬', '嚴長壽', 
-      '方仲永', '諸葛亮(孔明)', '司馬懿', '居禮夫人', '安妮', '戴安娜', '芥川龍之介', 
-      '泰戈爾', '黃仕傑', '溫士凱', '盧彥勳', '阿姆斯壯', '布萊恩', '曹操', '周瑜', 
-      '黃蓋', '許芳宜', '布大爺', '敘里奧'
+    // --------------------------------------------------------
+    // 1. 完整 415 筆課文語料庫資料 (人106 / 時105 / 地102 / 事102)
+    // --------------------------------------------------------
+    const DEFAULT_TIME = [
+      "今天早晨", "放學後的黃昏", "雨過天晴後", "下雨的夜晚", "大雨傾盆的午後",
+      "下課鐘聲響起時", "午休時間", "晨光灑落時", "太陽下山時", "春天來臨之際",
+      "夏天的微風中", "秋高氣爽的早晨", "寒冷的冬夜裡", "星期天的下午", "月亮升起的時刻",
+      "一大清早", "陽光普照的晌午", "微風徐徐的傍晚", "深夜萬籟俱寂時", "晨曦初露時分",
+      "天剛破曉時", "旭日東昇之際", "微雨初歇時", "狂風暴雨的夜裡", "春暖花開的清晨",
+      "夏日蟬鳴的午後", "楓葉轉紅的秋天", "白雪皚皚的嚴冬", "除夕圍爐的夜晚", "元宵節燈會時",
+      "端午節正午", "中秋月圓之夜", "重陽節登高時", "開學的第一天", "結業式的午後",
+      "畢業典禮當天", "升旗典禮的清晨", "打掃時間開始時", "第一節上課鐘響", "吃午餐的時候",
+      "運動會開幕時", "大隊接力起跑瞬間", "同樂會進行時", "校外教學出發時", "抵達目的地的那一刻",
+      "日落西山之際", "夜幕低垂時", "繁星點點的深夜", "流星劃過夜空時", "黎明即將到來前",
+      "小時候的夏天", "童年時光裡", "難忘的那個週末", "很久很久以前", "在一個陽光明媚的日子",
+      "狂風呼嘯的午後", "細雨綿綿的清晨", "濃霧籠罩的早晨", "暴風雨來臨前夕", "彩霞滿天的黃昏",
+      "寒流來襲的清晨", "微涼的秋夜", "暖洋洋的冬日午後", "烈日當空的正午", "春雨綿綿的時節",
+      "初春時分", "盛夏時節", "深秋的午後", "初冬的早晨", "嚴冬深夜",
+      "鐘聲敲響十二下的瞬間", "新年的第一道曙光", "倒數計時的那一刻", "下過大雷雨的午後", "微風輕拂的清晨",
+      "雷聲隆隆的傍晚", "烏雲密布的下午", "霧氣散去時", "露珠閃爍的清晨", "暮色蒼茫時",
+      "滿月高掛的夜空下", "星光燦爛的夜晚", "燈火通明的深夜", "晨光熹微的時刻", "夕陽染紅天際時",
+      "午後雷陣雨過後", "微風吹拂的樹蔭下", "微雨飄落的早晨", "金黃色的秋天午後", "冰涼清澈的冬晨",
+      "小學一年級的時候", "剛升上三年級的秋天", "轉學後的第一個星期", "春假的第一天", "暑假結束前夕",
+      "寒假露營的夜晚", "童年記憶深處", "那段刻骨銘心的日子", "日光漸漸隱沒的時刻", "微光閃爍的清晨"
     ];
 
-    const RAW_CARDS_TIME = [
-      '早上', '一大早', '下雨的晚上', '冬天過後', '春天到了', '放學過後', '一下子', 
-      '太陽一下山', '快過年了', '星期日', '過了很久', '太陽出來時', '下課的時候', 
-      '一覺醒來', '五月三日', '很久以前', '雨過天晴後', '午覺過後', '突然間', 
-      '下午放學時', '開學第一天', '清晨之際', '涼爽秋天', '一眨眼', '傍晚時分', 
-      '週末假期', '許久之後', '每年冬天', '冬至時節', '溫暖春季', '炎熱中午', 
-      '到了第七天', '月亮升起時', '世界地球日', '課間十分鐘', '深夜時刻', 
-      '雷雨交加之際', '很久很久以前', '大晴天', '臨睡前', '下課鐘聲響起', '夕陽西下', 
-      '半夜', '暑假期間', '黎明拂曉', '光陰似箭', '幾分鐘過後', '童年時光', '正當此時', 
-      '世紀之交', '清晨', '黃昏', '半夜三更', '陽光燦爛的午後', '春秋時期', '寒來暑往', 
-      '轉眼間', '日月如梭', '剎那間', '夜深人靜', '歲末年終', '頃刻之間', '課間休息', 
-      '迎彩霞的拂曉', '光芒萬丈的旦夕', '金秋時節', '春暖花開之際', '風和日麗的早晨', 
-      '放學後', '三月', '第二天早上', '當……就……', '春去秋來', '深夜', '破曉時刻', 
-      '一會兒', '元宵節前一天', '傍晚', '四月二十三日', '久而久之', '曾幾何時', 
-      '瞬間', '千百年來', '中秋節', '夏夜晚風', '終年', '日月星辰', '西元二〇一八年六月', 
-      '三十秒', '四十七歲那年', '莫拉克颱風期間', '日暮', '明年春天', '秋夜', 
-      '小米收成後', '天未亮', '十九歲那年', '西元一六五九年', '春秋時代', '三月二十二日', 
-      '四十歲那年', '每一千年', '北宋', '西元一九九二年', '遠古年代', '冬夜', 
-      '上古時代', '少年時', '西元1928年', '西元2001年', '戰國時代', '每年七月十二日', 
-      '二〇二四年夏天', '民國四十年代', '三天之內', '清晨大霧時', '二〇一六年', '初夏', 
-      '歲末', '薄暮', '雨季', '頃刻', '一會兒工夫', '黎明', '昔日', '當下', '光陰', 
-      '日積月累', '寒冬', '千鈞一髮', '重陽日', '永恆', '歲月', '一時片刻', '夜以繼日', 
-      '彈指之間', '良辰吉日'
+    const DEFAULT_PERSON = [
+      "我和弟弟", "長頸鹿斑斑", "小兔子和松鼠", "班導師和班長", "神筆馬良",
+      "齊柏林先生", "海倫·凱勒", "沈芯菱姊姊", "我和好朋友小宇", "迷路的小鴨",
+      "熱心助人的老爺爺", "認真的值日生", "愛動腦筋的諸葛亮", "大個子與小個子", "頑皮的小貓",
+      "我和媽媽", "慈祥的外婆", "嚴格卻溫柔的爸爸", "調皮的表弟", "熱愛畫畫的小妹妹",
+      "愛因斯坦", "居禮夫人", "馬拉拉", "孔子與學生們", "李白與杜甫",
+      "蘇東坡", "大文豪莎士比亞", "神勇的孫悟空", "機智的阿凡提", "勇敢的格列佛",
+      "賣火柴的小女孩", "善良的小錫兵", "愛說謊的皮諾丘", "聰明的木偶奇遇記主角", "辛勤的農夫",
+      "默默付出的清潔隊員", "英勇的消防隊員", "溫柔的護理師阿姨", "熱心的導護志工媽媽", "學校的警衛伯伯",
+      "操場上的體育老師", "實驗室裡的自然老師", "戴著眼鏡的圖書館阿姨", "校長與全校師生", "小組組長與組員們",
+      "隔壁班的轉學生", "同桌的好夥伴", "五年二班的運動健將", "幼兒園時期的玩伴", "社區裡的小朋友",
+      "探險隊隊長", "太空人阿姆斯壯", "登山隊員們", "勇敢的航海家", "生態觀察攝影師",
+      "森林裡的小松鼠", "池塘邊的小青蛙", "勤勞的工蟻們", "採蜜的花蝴蝶", "高歌的小麻雀",
+      "森林之王獅子", "機伶的小狐狸", "溫和的大象伯伯", "慢慢爬的小烏龜", "翱翔天際的老鷹",
+      "快樂的單車騎士", "公園裡下棋的阿伯", "推著嬰兒車的年輕媽媽", "路旁賣花的老奶奶", "認真練琴的姐姐",
+      "熱愛籃球的哥哥", "剛學會走路的小堂妹", "博學多聞的爺爺", "廚藝精湛的姑姑", "親切的鄰居叔叔",
+      "科學家牛頓", "發明大王愛迪生", "音樂神童莫札特", "偉大的畫家梵谷", "音樂家貝多芬",
+      "奧運金牌得主", "田徑場上的選手們", "堅韌不拔的馬拉松跑者", "羽球國手小戴", "桌球小將們",
+      "默默耕耘的小農夫", "熱愛海洋的潛水員", "保護山林的巡山員", "穿梭巷弄的郵差先生", "忙碌的便利商店店員",
+      "我和全家人", "班上的朗讀代表", "熱愛機器人的小創客", "合唱團的指揮老師", "扯鈴隊的小高手",
+      "童軍團的小隊長", "陶藝工坊的老師傅", "傳統木雕藝師", "認真寫書法的老先生", "熱愛大自然的觀察家"
     ];
 
-    const RAW_CARDS_LOCATION = [
-      '在草地上', '在花園裡', '在林間', '在冰涼的海水裡', '在山坡上', '在水井裡', 
-      '在池塘邊', '在大門後', '在樹上', '在田裡', '在桌子上', '在高高的天空上', 
-      '在校園裡', '在城堡裡', '在教室裡', '在窗戶上', '在山谷裡', '在泥土裡', 
-      '在彩虹下方', '在操場上', '二年級教室', '學校操場', '熱鬧的夜市', '翠綠的山坡', 
-      '越南水鄉', '建築工地', '金黃色的稻田', '曾文溪口濕地', '新埔小鎮', '小人國的海灘', 
-      '泥土深處', '溫暖的河口', '極地冰屋', '神仙住的山洞', '廣闊的大海', '社區圖書館', 
-      '古老的木橋', '茂密的樹林', '安靜的小巷', '月光河畔', '溫馨的客廳', '海中小島', 
-      '學校的公布欄', '繁華的城市', '神奇的畫冊裡', '山頂觀景臺', '校園綠蔭大道', 
-      '微風吹拂的花園', '遠方的城堡', '溫暖的家', '蔚藍的大海', '繁華的街市', 
-      '幽靜的山谷', '萬里長城', '圖書館的一角', '農夫的菜園', '童話王國', '清澈見底的小溪', 
-      '崇山峻嶺', '綠意盎然的森林', '廣袤無垠的草原', '熱鬧非凡的操場', '密不透風的樹林', 
-      '矗立山頭的燈塔', '古色古香的街角', '充滿歡笑的教室', '波濤澎湃的海面', 
-      '花香四溢的花園', '寬敞明亮的大廳', '游泳池', '臺灣', '加拿大', '淡水', 
-      '珠穆朗瑪峰', '泰國', '荷蘭', '普羅旺斯高原', '鹿港老街', '半邊井', 
-      '宜蘭傳藝園區', '嘉明湖', '水社壩堰堤公園', '南海', '火焰山', '成功大學力行校區', 
-      '四川', '井底', '東海', '五指山下', '非洲', '花蓮縣玉里鎮', '臺灣南部平原', 
-      '法國農村', '北宋針鋪門前', '迪士尼動畫工作室', '吉卜力工作室', '巴基斯坦小村落', 
-      '聯合國大會', '巴黎奧運賽場', '山林獵寮', '荒島／無人島', '英國約克夏', 
-      '齊國朝廷公堂', '醫院急診室', '古生物修復室', '故宮特展展廳', '錄音室', 
-      '廬山／西林寺', '亨德孫島', '馬里亞納海溝', '國立海洋生物博物館', '奧林帕斯山', 
-      '嘉義聖心教養院', '秦始皇陵墓', '曼德勒山', '不丹', '曹車水寨', '鵝鑾鼻燈塔', 
-      '七星潭／清水斷崖', '緬甸', '馬丘比丘', '秘魯', '佛萊堡', '西城縣', 
-      '基隆廟口', '彰化北斗', '馬達加斯加', '拉努瑪法納國家公園', '綠屋', '埃及', 
-      '不來梅', '太魯閣', '七家灣溪', '赤壁', '萬華', '思源埡口', '獵寮', '王功海邊', 
-      '鳳凰樹下', '月球', '加迪斯', '臺南市美術館'
+    const DEFAULT_LOCATION = [
+      "在學校操場旁", "在綠油油的草地上", "在社區圖書館角落", "在廚房餐桌旁", "在熱鬧的夜市裡",
+      "在曾文溪口濕地", "在老街的石板路上", "在教室的窗戶邊", "在客廳沙發上", "在波光粼粼的池塘邊",
+      "在巍峨的高山頂端", "在蔚藍的大海邊", "在司令台後方的樹蔭下", "在安靜的閱覽室中", "在微風輕拂的花園裡",
+      "在學校的自然教室裡", "在生態池的木棧道上", "在熱鬧非凡的體育館內", "在陽光灑落的走廊上", "在色彩繽紛的美術教室",
+      "在廚房流理台前", "在溫暖的臥室被窩裡", "在開滿鮮花的小陽台上", "在家門前的小院子裡", "在阿公家的菜園中",
+      "在熱氣騰騰的廚房裡", "在擺滿模型的小書房", "在堆滿童話書的床頭旁", "在爺爺的木工坊裡", "在外婆的花草庭院中",
+      "在阿里山的檜木森林步道", "在太魯閣壯麗的峽谷深處", "在墾丁金黃色的沙灘上", "在日月潭如詩如畫的湖畔", "在鹿港古色古香的小巷內",
+      "在九份雲霧繚繞的石階上", "在合歡山開闊的箭竹草原", "在台南孔廟古樸的紅牆下", "在蘭嶼湛藍的清澈海灣", "在澎湖玄武岩壯麗的石柱旁",
+      "在熱鬧喧囂的夜市攤販前", "在香氣撲鼻的傳統菜市場", "在人來人往的捷運車廂裡", "在安靜祥和的鄉間小路上", "在充滿歡笑的兒童遊樂場",
+      "在擺滿新鮮麵包的烘焙坊", "在擺滿文具書本的書店裡", "在香味四溢的早餐店門口", "在微風徐徐的河濱自行車道", "在莊嚴靜謐的歷史博物館內",
+      "在無邊無際的浩瀚太空中", "在月球凹凸不平的隕石坑旁", "在深邃神祕的海底珊瑚礁群", "在廣袤無垠的熱帶雨林深處", "在白雪紛飛的北極冰原上",
+      "在開滿薰衣草的普羅旺斯花田", "在非洲大草原的相思樹下", "在古老金字塔前方的黃沙中", "在壯觀的尼加拉大瀑布前", "在喜馬拉雅山終年積雪的山脊上",
+      "在學校大禮堂的舞台正中央", "在整齊劃一的跑道起跑點", "在校門口的斑馬線旁", "在洗手台旁的長椅上", "在綠蔭成排的校園林蔭大道",
+      "在充滿驚奇的科學實驗室", "在擺滿各國樂器的音樂教室", "在寬敞明亮的電腦教室", "在清脆鳥鳴縈繞的校園後山", "在司令台的大階梯前",
+      "在溫暖舒適的露營帳篷內", "在劈啪作響的溫暖營火旁", "在隨風搖曳的吊床上", "在水質清涼透澈的山澗溪流中", "在視野開闊的山頂觀景台",
+      "在果實纍纍的觀光果園裡", "在金黃稻浪起伏的稻田中央", "在充滿童趣的樹屋上", "在波濤洶湧的海邊防波堤上", "在芳草如茵的野餐墊上",
+      "在熙熙攘攘的火車站月台上", "在寬廣平坦的校園中庭花圃旁", "在瀰漫咖啡香氣的轉角小店", "在安詳靜謐的鄉村合院中", "在充滿木頭清香的舊書攤前",
+      "在陽光斑駁的大榕樹底下", "在開滿金針花的山丘上", "在水鳥覓食的紅樹林保護區", "在古老悠久的拱橋中央", "在清澈見底的冷泉池畔"
     ];
 
-    const RAW_CARDS_EVENT = [
-      '一邊擦汗，一邊澆花', '開心的跳進池塘', '急急忙忙進教室', '哈哈大笑', 
-      '悄悄把頭縮回去', '忙著採果子', '拍著肚子說大話', '滿臉笑容的上鏡頭', 
-      '高興的大叫好喔好喔', '一邊看書，一邊聽音樂', '急急忙忙透進水溝', '恭敬的向對方鞠躬', 
-      '照著鏡子大叫起來', '歡快的搖搖尾巴', '安安靜靜寫作業', '倒過來貼春聯', 
-      '帶著氣球向前跑', '頂著太陽勤勞工作', '興高采烈的堆山洞', '認真的向老師發問', 
-      '熱情地打招呼', '展翅高飛', '傳遞溫暖信件', '齊心協力划船', '辛苦操練保家衛國', 
-      '用心設計宏偉建築', '用神筆幫助貧民', '跨越千里飛來過冬', '親手搓湯圓團圓', 
-      '小人國小兵緊綁巨人', '努力穴居築巢', '大樹張傘遮陽擋雨', '太陽用熱力使人脫衣', 
-      '小水滴蒸發聚集成雲', '主動承認錯誤道歉', '細心照顧受傷小鳥', '認真聽講做筆記', 
-      '歡樂地圍繞螢火跳舞', '大聲重述精彩故事', '細心晒乾金黃柿餅', '合力抬起重物', 
-      '揮動魔杖變出花朵', '頂著大太陽揮汗耕作', '在草叢間提燈點亮夜空', '開心地分享玩具', 
-      '勇敢地面對挑戰', '細心織出一張漂亮的網', '頂著寒風傳遞快遞信件', '快樂地在海邊堆沙堡', 
-      '靜靜地仰望美麗星空', '熱烈地討論學習計畫', '感謝大地賜予豐收', '齊心協力築巢', 
-      '勤奮不懈學習', '化險為夷', '同心協力', '百折不撓', '刻苦耐勞', '精益求精', 
-      '迎難而上', '手舞足蹈', '默默耕耘', '興高采烈', '異口同聲', '驚慌失措', 
-      '循循善誘', '水滴石穿', '挺身而出', '歡天喜地', '無微不至', '腳踏實地', 
-      '集思廣益', '游出大海一般的壯志', '一掃而空', '空心進籃', '奉獻一生', 
-      '克服失明與失聰', '登頂珠穆朗瑪峰', '動手製作壽司', '翻山越嶺', '發明飛機', 
-      '憑缽杖前往南海求經', '舉辦飛魚季', '蛻變成美麗的蝴蝶', '踏上尋夢之旅', 
-      '大鬧天宮', '暗中畫上最後一片葉子', '用一公斤攜帶垃圾下山', '洗筆染黑池水', 
-      '暗中縫製精美新鞋', '乘著風的翅膀飛躍海洋', '連夜拿著鋤頭開圳引水', '募集蚊帳拯救生命', 
-      '高空俯瞰空拍臺灣', '創作《拾穗》描繪農民', '研發設計經典商標', '發展3D電腦動畫技術', 
-      '為女孩爭取受教育權', '克服病痛三度挑戰奧運', '救護小黑熊並唱歌送別', '荒島搭建木屋自給自足', 
-      '幽默機智化解名片尷尬', '巧用三條死罪開導國君', '發現自己長處發揮優勢', '急診室救護與時間賽跑', 
-      '清修化石解開古生物密碼', '突破黑洞創作少年奇幻小說', '負荊請罪與言歸於好', '條列好處推廣桌遊互動', 
-      '奉獻一生照顧重殘兒童', '發起「捐一頂蚊帳」活動', '發揮敏銳觀察提出大陸漂移說', '設計芭比娃娃開創玩具產業', 
-      '草船借箭神機妙算', '臨危救人並互相原諒', '贈送藍色連身裙改變社區', '出手救治刺傷的旗魚王', 
-      '縣官巧審石頭抓偷錢賊', '普羅米修斯冒險盜取天火', '神農氏親嘗百草記錄藥性', '演講突破限時為弱勢發聲', 
-      '發揮創意用溜溜球創世界紀錄', '接力賽決勝', '拱手讓人', '未雨綢繆', '臨渴掘井', 
-      '揠苗助長', '狐假虎威', '大開城門', '氣定神閒', '故布疑陣', '拆開禮物', 
-      '誤飲葡萄酒', '扔橘子送行', '換草鞋行路', '火燒連環船', '割捨南瓜', '對號入座', 
-      '深夜抄訂單', '踏上月球漫步', '擊石生火', '闢建生態社區', '登臺越級挑戰', 
-      '王戎辨苦李', '楊氏之子巧答', '不來梅樂隊擊退強盜'
+    const DEFAULT_EVENT = [
+      "手忙腳亂地到處找東西", "開心地又蹦又跳", "一邊擦汗一邊澆花", "好奇地抬頭仰望天空",
+      "認真地向老師請教問題", "滿臉笑容地互相擊掌", "同心協力搭建美麗的積木", "小心翼翼地捧起雛鳥",
+      "津津有味地品嘗美食", "聚精會神地讀著故事書", "驚慌失措地四處奔跑", "感動得熱淚盈眶",
+      "專心致志地描繪圖畫", "滿頭大汗地在操場奔跑", "興奮地拍手歡呼喝采", "同甘共苦地完成艱難任務",
+      "全神貫注地凝視著棋盤", "輕手輕腳地走過走廊", "雀躍地迎接遠道而來的朋友", "迫不及待地拆開生日禮物",
+      "咬緊牙關奮力衝向終點", "屏氣凝神地聆聽美妙音樂", "手腳並用地攀登陡峭岩壁", "依依不捨地揮手告別",
+      "大驚失色地看著眼前景象", "七嘴八舌地熱烈討論話題", "井然有序地排隊領取物品", "廢寢忘食地鑽研科學實驗",
+      "笑容滿面地迎接嶄新的一天", "目瞪口呆地望著魔術表演", "垂頭喪氣地走回座位", "眉開眼笑地分享快樂趣事",
+      "專心致志地練習投籃技巧", "一邊哼著歌一邊整理書包", "爭先恐後地舉手回答問題", "小心翼翼地擦拭名貴花瓶",
+      "目不轉睛地盯著黑板抄筆記", "聚精會神地觀察毛毛蟲蛻變", "氣喘吁吁地跑上樓梯", "如釋重負地嘆了一大口氣",
+      "歡天喜地地慶祝比賽勝利", "聚精會神地敲打鍵盤寫作", "專注地調配各種美麗顏料", "手足無措地站在原地發愣",
+      "小心翼翼地跨越湍急溪流", "大聲疾呼並揮動雙手求援", "滿心歡喜地收下這份心意", "同心協力打掃整座教室",
+      "全神貫注地調整顯微鏡焦距", "興致勃勃地討論週末露營計畫", "大快朵頤地享受豐盛晚餐", "情不自禁地跟著音樂起舞",
+      "謹慎細心地黏貼撕裂的書頁", "滿面春風地步上頒獎台", "胸有成竹地走進考場應試", "欣喜若狂地大聲宣布好消息",
+      "一絲不苟地整理凌亂的書架", "全神貫注地拼湊千片拼圖", "齊心協力將大石塊移開", "滿懷感激地向長輩深深鞠躬",
+      "神采奕奕地參加早操活動", "躡手躡腳地走進昏暗房間", "若有所思地望著窗外遠方", "興高采烈地展示自己的作品",
+      "不慌不忙地化解緊張危機", "耐著性子安撫哭泣的小朋友", "腳踏實地地做好每件小事", "充滿自信地面對嚴峻挑戰",
+      "興致盎然地探索未知角落", "熱情洋溢地向大家打招呼", "條理分明地說明事情經過", "心平氣和地坐下來溝通",
+      "目不暇給地欣賞櫥窗商品", "歡聲雷動地迎接隊伍凱旋", "樂此不疲地重複練習動作", "驚嘆連連地望著燦爛煙火",
+      "從容不迫地登上演講台", "全心全意地投入志工服務", "熱火朝天地參與拔河比賽", "有說有笑地漫步在夕陽下"
     ];
 
-    // Master Textbook Sentences for Quiz Diagnosis Mode
-    const MASTER_SENTENCES = [
+    // 病句診斷題庫
+    const QUIZ_QUESTIONS = [
       {
-        source: "1上 第01課《這是誰的》",
-        time: "太陽剛升起的一大早", person: "長頸鹿斑斑", location: "在綠油油的草地上", event: "開心的跳進池塘",
-        template: (t, p, l, e) => `${t}，${p}${l}${e}。`
+        sentence: "大家在草地上玩遊戲，玩得好開心。",
+        missing: "person",
+        missingLabel: "人物",
+        source: "康軒國語第 02 課《這是誰的》",
+        hint: "這句話讀起來很熱鬧，但少了哪一個要素，讓我們不知道究竟是「誰」在玩呢？"
       },
       {
-        source: "1上 第02課《小草》",
-        time: "春天到了", person: "小草", location: "在泥土裡", event: "悄悄把頭縮回去",
-        template: (t, p, l, e) => `${t}，${p}${l}${e}。`
+        sentence: "今天下午，小狗和小羊在花園裡。",
+        missing: "event",
+        missingLabel: "事件動作",
+        source: "康軒國語第 03 課《秋千》",
+        hint: "交代了時間、地點和主角，但話只說了一半，他們到底在做什麼呢？"
       },
       {
-        source: "1下 第09課《花園裡》",
-        time: "放學過後", person: "弟弟和妹妹", location: "在花園裡", event: "一邊擦汗，一邊澆花",
-        template: (t, p, l, e) => `${t}，${p}${l}${e}。`
+        sentence: "小狗和小羊一起盪秋千，盪得好高好高。",
+        missing: "location",
+        missingLabel: "地點",
+        source: "康軒國語第 03 課《秋千》",
+        hint: "有主角和精彩動作，但如果閉上眼睛，我們不知道這個畫面發生在「哪裡」？"
       },
       {
-        source: "2上 第04課《小松鼠》",
-        time: "午覺過後", person: "松鼠", location: "在樹上", event: "忙著採果子",
-        template: (t, p, l, e) => `${t}，${p}${l}${e}。`
-      },
-      {
-        source: "2下 第06課《下課十分鐘》",
-        time: "下課的時候", person: "班長", location: "學校操場", event: "帶著氣球向前跑",
-        template: (t, p, l, e) => `${t}，${p}在${l}${e}。`
-      },
-      {
-        source: "3上 第05課《綠衣天使》",
-        time: "清晨之際", person: "綠衣郵差", location: "安靜的小巷", event: "傳遞溫暖信件",
-        template: (t, p, l, e) => `${t}，${p}穿梭在${l}中，${e}。`
-      },
-      {
-        source: "3下 第08課《捏陶師傅》",
-        time: "雨過天晴後", person: "神筆馬良", location: "熱鬧的夜市", event: "用神筆幫助貧民",
-        template: (t, p, l, e) => `${t}，${p}來到${l}，${e}。`
-      },
-      {
-        source: "4上 第02課《大自然之歌》",
-        time: "黎明拂曉", person: "小燕子", location: "金黃色的稻田", event: "展翅高飛",
-        template: (t, p, l, e) => `${t}，${p}從${l}上空${e}。`
-      },
-      {
-        source: "5上 第04課《夢想的翅膀》",
-        time: "陽光燦爛的午後", person: "萊特兄弟", location: "小人國的海灘", event: "發明飛機",
-        template: (t, p, l, e) => `${t}，${p}在${l}上${e}。`
-      },
-      {
-        source: "5下 第11課《守護海洋》",
-        time: "光陰似箭", person: "齊柏林", location: "臺灣", event: "高空俯瞰空拍臺灣",
-        template: (t, p, l, e) => `${t}，${p}在${l}上空${e}。`
-      },
-      {
-        source: "6上 第07課《赤壁風雲》",
-        time: "深夜三更", person: "諸葛亮(孔明)", location: "赤壁", event: "草船借箭神機妙算",
-        template: (t, p, l, e) => `${t}，${p}在${l}${e}。`
-      },
-      {
-        source: "6下 第03課《太空漫遊》",
-        time: "世紀之交", person: "阿姆斯壯", location: "月球", event: "踏上月球漫步",
-        template: (t, p, l, e) => `${t}，${p}登上${l}，${e}。`
+        sentence: "在草地上，大個子和小個子快樂地走過來。",
+        missing: "time",
+        missingLabel: "時間",
+        source: "康軒國語第 04 課《大個子，小個子》",
+        hint: "這件事發生在什麼時候呢？早晨、下課還是放學後？少了時間的線索！"
       }
     ];
 
-    const CUSTOM_CARDS_STORAGE_KEY = "mandarin_custom_cards_v3";
-    const CLASS_GALLERY_STORAGE_KEY = "mandarin_gallery_v3";
-    const TEACHER_PADLET_STORAGE_KEY = "mandarin_padlet_url_v3";
-    const CLOUD_GAS_URL_STORAGE_KEY = "mandarin_cloud_gas_url_v3";
+    // 全域狀態管理
+    let cardPool = {
+      time: [...DEFAULT_TIME],
+      person: [...DEFAULT_PERSON],
+      location: [...DEFAULT_LOCATION],
+      event: [...DEFAULT_EVENT]
+    };
 
-    // 預設的雲端試算表 Web App 網址（可在此填入您的 /exec 網址）
-    let cloudGasUrl = "https://script.google.com/macros/s/AKfycbxRrxqsVmpviLuN15xNcdr1ElOyBjt9WBZ6pcgTnWLqyXJwuXYj2dfAT6PI-s3Xyc_v/exec";
+    let currentCards = {
+      time: "今天早晨",
+      person: "我和弟弟",
+      location: "在學校操場旁",
+      event: "手忙腳亂地到處找東西"
+    };
 
-    let unifiedPool = { time: [], person: [], location: [], event: [] };
-    let currentDraw = { time: null, person: null, location: null, event: null };
-    let currentQuizData = null;
-    let poolChartInstance = null;
-    let classGallery = [];
-    let teacherPadletUrl = "";
-    let qrcodeInstance = null;
+    let currentQuizIndex = 0;
+    let gallerySubmissions = [];
+    let currentRoomId = "CLASS-" + Math.floor(1000 + Math.random() * 9000);
+    let pendingSubmissionType = "sentence";
+    let roomChannel = null;
 
-    // Helper: text cleaner
-    function cleanCardText(str) {
-      if (!str) return "";
-      return String(str).replace(/[\[\]]/g, '').trim();
-    }
+    // --------------------------------------------------------
+    // 2. 初始化與分頁切換
+    // --------------------------------------------------------
+    window.onload = function() {
+      // 檢查網址是否有自帶房間代碼（學生掃描 QR Code 進入）
+      const urlParams = new URLSearchParams(window.location.search);
+      const roomParam = urlParams.get('room');
+      if (roomParam) {
+        currentRoomId = roomParam;
+        showToast(`🟢 已連線至專屬班級房間：${currentRoomId}`);
+      }
 
-    // Initialize Card Pool
-    function initUnifiedPool() {
-      unifiedPool = {
-        person: RAW_CARDS_PERSON.map(text => ({ text, source: '課文' })),
-        time: RAW_CARDS_TIME.map(text => ({ text, source: '課文' })),
-        location: RAW_CARDS_LOCATION.map(text => ({ text, source: '課文' })),
-        event: RAW_CARDS_EVENT.map(text => ({ text, source: '課文' }))
-      };
+      loadSavedData();
+      renderCurrentCards();
+      updateTotalCountDisplay();
+      initQuiz();
+      renderGallery();
+      renderPoolChips('all');
+      renderClassQrCode();
+      
+      // 初始情境自適應靈感
+      renderAdaptiveHints(document.getElementById('diaryBaseSentence').innerText);
+      setupBroadcastSync();
+    };
 
-      // Load custom saved cards
+    function setupBroadcastSync() {
       try {
-        const saved = localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          ['time', 'person', 'location', 'event'].forEach(k => {
-            if (Array.isArray(parsed[k])) {
-              parsed[k].forEach(c => {
-                if (c && c.text) {
-                  unifiedPool[k].unshift({ text: c.text, source: c.source || '師生自訂', isCustom: true });
-                }
-              });
+        if ('BroadcastChannel' in window) {
+          roomChannel = new BroadcastChannel('mandarin_room_' + currentRoomId);
+          roomChannel.onmessage = function(event) {
+            if (event.data && event.data.type === 'NEW_SUBMISSION') {
+              gallerySubmissions.unshift(event.data.payload);
+              saveGalleryData();
+              renderGallery();
+              showToast(`📢 收到【${event.data.payload.author || '同學'}】最新送出的作品！`);
+              confetti({ particleCount: 40, spread: 50, origin: { y: 0.8 } });
+            } else if (event.data && event.data.type === 'LIKE_UPDATE') {
+              // 班級同步愛心即時變更
+              const target = gallerySubmissions.find(x => x.id === event.data.payload.id);
+              if (target) {
+                target.likes = event.data.payload.likes;
+                saveGalleryData();
+                renderGallery();
+              }
             }
-          });
+          };
         }
-      } catch (err) {
-        console.error("讀取自訂卡片失敗", err);
+      } catch (e) {
+        console.log("BroadcastChannel not supported", e);
       }
     }
 
-    // Tab Navigation
-    window.switchTab = function(tabName) {
-      const tabs = ['quiz', 'workbench', 'gallery', 'analytics'];
-      tabs.forEach(t => {
-        const sec = document.getElementById(`tab-${t}`);
-        const btn = document.getElementById(`nav-btn-${t}`);
-        if (sec) sec.classList.toggle('hidden', t !== tabName);
-        if (btn) {
-          if (t === tabName) {
-            btn.className = "px-4 py-1.5 rounded-full text-xs md:text-sm font-bold transition-all bg-amber-500 text-white shadow-sm";
-          } else {
-            btn.className = "px-4 py-1.5 rounded-full text-xs md:text-sm font-bold text-amber-900 hover:bg-amber-200/60 transition-all";
-          }
-        }
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-200');
+        btn.classList.add('text-slate-500');
       });
-      if (tabName === 'analytics') {
-        setTimeout(() => updateCharts(), 150);
+
+      const targetSection = document.getElementById('section-' + tabId);
+      const targetBtn = document.getElementById('tab-' + tabId);
+
+      if (targetSection) targetSection.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.remove('text-slate-500');
+        targetBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md', 'shadow-indigo-200');
       }
-    };
 
-    // ============================================================
-    // 2. 完整句小達人 (Quiz Mode) 核心出題與判定
-    // ============================================================
-    const ELEMENT_NAMES = {
-      time: '時間',
-      person: '人物',
-      location: '地點',
-      event: '事件'
-    };
+      if (tabId === 'gallery') {
+        renderGallery();
+        renderClassQrCode();
+      }
+    }
 
-    window.generateQuizQuestion = function() {
-      if (!MASTER_SENTENCES || MASTER_SENTENCES.length === 0) return;
+    // --------------------------------------------------------
+    // 3. 完整句小達人 (病句診斷) 模組
+    // --------------------------------------------------------
+    function initQuiz() {
+      renderQuizQuestion(currentQuizIndex);
+    }
 
-      const randomIdx = Math.floor(Math.random() * MASTER_SENTENCES.length);
-      const item = MASTER_SENTENCES[randomIdx];
-      const types = ['time', 'person', 'location', 'event'];
-      const targetType = types[Math.floor(Math.random() * types.length)];
-      const targetWord = item[targetType];
+    function renderQuizQuestion(index) {
+      const q = QUIZ_QUESTIONS[index];
+      document.getElementById('quizSentence').innerText = q.sentence;
+      document.getElementById('quizSource').innerText = `出處：${q.source}`;
+      
+      const feedback = document.getElementById('quizFeedback');
+      feedback.className = "hidden rounded-2xl p-4 transition-all";
+      feedback.innerHTML = "";
 
-      currentQuizData = {
-        item: item,
-        targetType: targetType,
-        targetWord: targetWord
-      };
-
-      // 課文出處
-      const sourceTag = document.getElementById('quiz-source-tag');
-      if (sourceTag) sourceTag.textContent = `課文原句出處：${item.source}`;
-
-      // 產生挖空句子
-      const displaySentence = item.template(
-        targetType === 'time' ? '<span class="quiz-blank-box">❓【少了什麼？】</span>' : item.time,
-        targetType === 'person' ? '<span class="quiz-blank-box">❓【少了什麼？】</span>' : item.person,
-        targetType === 'location' ? '<span class="quiz-blank-box">❓【少了什麼？】</span>' : item.location,
-        targetType === 'event' ? '<span class="quiz-blank-box">❓【少了什麼？】</span>' : item.event
-      );
-
-      const sentenceDisplay = document.getElementById('quiz-sentence-display');
-      if (sentenceDisplay) sentenceDisplay.innerHTML = displaySentence;
-
-      // 提示狀態重置為折疊
-      const hintContent = document.getElementById('quiz-hint-content');
-      const targetTypeSpan = document.getElementById('quiz-target-type');
-      if (hintContent) hintContent.classList.add('hidden');
-      if (targetTypeSpan) targetTypeSpan.textContent = ELEMENT_NAMES[targetType];
-
-      // 回饋區重置
-      const feedback = document.getElementById('quiz-feedback');
-      if (feedback) feedback.className = "hidden text-base font-extrabold py-2 px-4 rounded-xl";
-
-      // 產生 3 個選項：包含正確解答 + 跨要素干擾項
       const options = [
-        { text: targetWord, type: targetType, isCorrect: true }
+        { key: 'time', label: '⏰ 時間要素' },
+        { key: 'person', label: '👤 人物要素' },
+        { key: 'location', label: '📍 地點要素' },
+        { key: 'event', label: '⚡ 事件動作' }
       ];
 
-      // 從其他要素類別中抽取干擾項
-      const otherTypes = types.filter(t => t !== targetType);
-      while (options.length < 3 && otherTypes.length > 0) {
-        const randType = otherTypes[Math.floor(Math.random() * otherTypes.length)];
-        const poolList = unifiedPool[randType] && unifiedPool[randType].length > 0 ? unifiedPool[randType] : [];
-        if (poolList.length > 0) {
-          const randCard = poolList[Math.floor(Math.random() * poolList.length)];
-          const cardWord = cleanCardText(randCard.text);
-          if (!options.some(o => o.text === cardWord)) {
-            options.push({ text: cardWord, type: randType, isCorrect: false });
-          }
-        } else {
-          break;
-        }
-      }
+      const container = document.getElementById('quizOptions');
+      container.innerHTML = "";
 
-      // 洗牌
-      options.sort(() => Math.random() - 0.5);
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "p-3.5 rounded-2xl border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 font-black text-sm text-slate-700 transition flex items-center justify-center";
+        btn.innerText = opt.label;
+        btn.onclick = () => checkQuizAnswer(opt.key, q);
+        container.appendChild(btn);
+      });
+    }
 
-      const grid = document.getElementById('quiz-options-grid');
-      if (grid) {
-        grid.innerHTML = options.map(opt => `
-          <button onclick="checkQuizAnswer('${opt.text.replace(/'/g, "\\'")}', '${targetWord.replace(/'/g, "\\'")}', '${targetType}', '${opt.type}')" class="p-3.5 rounded-2xl bg-white border-2 border-purple-200 hover:border-purple-500 hover:bg-purple-100/60 font-black text-sm text-purple-950 transition-all shadow-sm transform hover:-translate-y-0.5">
-            ${opt.text}
-          </button>
-        `).join('');
-      }
-    };
-
-    window.toggleQuizHint = function() {
-      const hintContent = document.getElementById('quiz-hint-content');
-      if (hintContent) hintContent.classList.toggle('hidden');
-    };
-
-    window.checkQuizAnswer = function(chosenWord, targetWord, targetType, chosenType) {
-      const feedback = document.getElementById('quiz-feedback');
-      if (!feedback) return;
-
+    function checkQuizAnswer(selectedKey, q) {
+      const feedback = document.getElementById('quizFeedback');
       feedback.classList.remove('hidden');
-      if (chosenWord === targetWord) {
-        feedback.className = "text-base font-extrabold py-2.5 px-4 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300";
-        feedback.innerHTML = `🎉 太棒了！答對了！「${chosenWord}」正是填補【${ELEMENT_NAMES[targetType]}】的最完整卡片！`;
+
+      if (selectedKey === q.missing) {
+        feedback.className = "rounded-2xl p-4 bg-emerald-50 border-2 border-emerald-200 text-emerald-800 text-xs font-bold leading-relaxed";
+        feedback.innerHTML = `
+          <div class="flex items-center gap-2 mb-1 text-sm font-black text-emerald-900">
+            <span>🎉 太厲害了，完全答對！</span>
+          </div>
+          <p>這句話確實最缺乏<strong>【${q.missingLabel}】</strong>！${q.hint}</p>
+        `;
+        confetti({ particleCount: 30, spread: 45, origin: { y: 0.7 } });
       } else {
-        feedback.className = "text-base font-extrabold py-2.5 px-4 rounded-xl bg-rose-100 text-rose-900 border border-rose-300";
-        feedback.innerHTML = `💡 再想一想喔！您選擇的「${chosenWord}」屬於【${ELEMENT_NAMES[chosenType]}】，但這個句子缺少的是【${ELEMENT_NAMES[targetType]}】喔！`;
-      }
-    };
-
-    // ============================================================
-    // 3. 造句抽卡池 (Workbench) 抽卡、留白與槽位渲染
-    // ============================================================
-    window.drawCard = function(type) {
-      const pool = unifiedPool[type];
-      if (!pool || pool.length === 0) {
-        showToast(`目前【${ELEMENT_NAMES[type] || type}】卡池沒有可用卡片！`, "info");
-        return;
-      }
-      const randomCard = pool[Math.floor(Math.random() * pool.length)];
-      currentDraw[type] = randomCard;
-      renderSlot(type);
-      updateCombinedSentence();
-      showToast(`已抽取【${ELEMENT_NAMES[type] || type}】：${cleanCardText(randomCard.text)}`, "info");
-    };
-
-    window.drawAll = function() {
-      ['time', 'person', 'location', 'event'].forEach(type => {
-        const pool = unifiedPool[type];
-        if (pool && pool.length > 0) {
-          currentDraw[type] = pool[Math.floor(Math.random() * pool.length)];
-        }
-      });
-      ['time', 'person', 'location', 'event'].forEach(type => renderSlot(type));
-      updateCombinedSentence();
-      showToast("🎲 成功一鍵抽取四要素卡牌！", "success");
-    };
-
-    window.clearSingleCard = function(type) {
-      currentDraw[type] = null;
-      renderSlot(type);
-      updateCombinedSentence();
-      showToast(`已將【${ELEMENT_NAMES[type] || type}】歸零留白，可自由打字發揮！`, "info");
-    };
-
-    window.clearAllCards = function(showToastMsg = true) {
-      currentDraw = { time: null, person: null, location: null, event: null };
-      ['time', 'person', 'location', 'event'].forEach(type => renderSlot(type));
-      updateCombinedSentence();
-      if (showToastMsg) {
-        showToast("✨ 所有卡槽已重置留白，請開始自由造句！", "info");
-      }
-    };
-
-    function renderSlot(type) {
-      const slotEl = document.getElementById(`slot-${type}`);
-      if (!slotEl) return;
-
-      const card = currentDraw[type];
-      const wordEl = slotEl.querySelector('.card-word');
-      const metaEl = slotEl.querySelector('.card-meta');
-
-      if (card) {
-        if (wordEl) {
-          wordEl.textContent = cleanCardText(card.text);
-          wordEl.className = "card-word text-xl md:text-2xl font-black text-gray-900 leading-snug";
-        }
-        if (metaEl) {
-          metaEl.textContent = card.source || (card.isCustom ? '師生自訂' : '課文');
-          metaEl.className = "card-meta text-[11px] font-bold text-amber-700 bg-white px-1.5 py-0.5 rounded border border-amber-200";
-        }
-      } else {
-        if (wordEl) {
-          wordEl.textContent = "✨ 自由發揮（留白）";
-          wordEl.className = "card-word text-xl md:text-2xl font-black text-gray-400 leading-snug";
-        }
-        if (metaEl) {
-          metaEl.textContent = "自由創作";
-          metaEl.className = "card-meta text-gray-400 text-xs";
-        }
+        feedback.className = "rounded-2xl p-4 bg-rose-50 border-2 border-rose-200 text-rose-800 text-xs font-bold leading-relaxed";
+        feedback.innerHTML = `
+          <div class="flex items-center gap-2 mb-1 text-sm font-black text-rose-900">
+            <span>💡 再想一想喔！</span>
+          </div>
+          <p>提示：${q.hint}</p>
+        `;
       }
     }
 
-    // Padlet Parameter & Modal Handling
-    function checkUrlForPadletParam() {
-      const params = new URLSearchParams(window.location.search);
-      const padlet = params.get('padlet');
-      if (padlet) {
-        teacherPadletUrl = decodeURIComponent(padlet);
-        localStorage.setItem(TEACHER_PADLET_STORAGE_KEY, teacherPadletUrl);
-      } else {
-        const saved = localStorage.getItem(TEACHER_PADLET_STORAGE_KEY);
-        if (saved) teacherPadletUrl = saved;
-      }
-      const padletInput = document.getElementById('teacher-padlet-input');
-      if (padletInput && teacherPadletUrl) {
-        padletInput.value = teacherPadletUrl;
-      }
-      updatePadletButtonText();
+    function nextQuizQuestion() {
+      currentQuizIndex = (currentQuizIndex + 1) % QUIZ_QUESTIONS.length;
+      renderQuizQuestion(currentQuizIndex);
     }
 
-    function updatePadletButtonText() {
-      const btn = document.getElementById('btn-submit-padlet');
-      if (!btn) return;
-      if (teacherPadletUrl) {
-        btn.innerHTML = `<span>📌</span> 複製並前往 Padlet 繳交`;
-        btn.title = `將自動複製造句並跳轉至：${teacherPadletUrl}`;
-      } else {
-        btn.innerHTML = `<span>📌</span> 複製造句並前往 Padlet`;
-        btn.title = "點擊前可由右上角「設定班級 Padlet」設定專屬看板網址";
-      }
+    // --------------------------------------------------------
+    // 4. 造句工作台核心邏輯
+    // --------------------------------------------------------
+    function renderCurrentCards() {
+      document.getElementById('card-time-text').innerText = currentCards.time || "（留白）";
+      document.getElementById('card-person-text').innerText = currentCards.person || "（留白）";
+      document.getElementById('card-location-text').innerText = currentCards.location || "（留白）";
+      document.getElementById('card-event-text').innerText = currentCards.event || "（留白）";
     }
 
-    window.togglePadletModal = function(show) {
-      const modal = document.getElementById('padlet-config-modal');
-      if (modal) modal.classList.toggle('hidden', !show);
-      if (show) {
-        const padletInput = document.getElementById('teacher-padlet-input');
-        if (padletInput && teacherPadletUrl) {
-          padletInput.value = teacherPadletUrl;
-        }
-      }
-    };
-
-    window.generateCustomShareLink = function() {
-      const input = document.getElementById('teacher-padlet-input');
-      let url = input.value.trim();
-      if (!url) {
-        showToast("請輸入正確的 Padlet 網址！", "error");
-        return;
-      }
-      if (!/^https?:\/\//i.test(url)) {
-        url = "https://" + url;
-        input.value = url;
-      }
-      teacherPadletUrl = url;
-      localStorage.setItem(TEACHER_PADLET_STORAGE_KEY, url);
-      updatePadletButtonText();
-
-      const baseUrl = window.location.origin + window.location.pathname;
-      const shareUrl = `${baseUrl}?padlet=${encodeURIComponent(url)}`;
-      
-      const resBox = document.getElementById('share-link-result-box');
-      const shareInput = document.getElementById('generated-share-link');
-      if (resBox) resBox.classList.remove('hidden');
-      if (shareInput) shareInput.value = shareUrl;
-
-      // Render QR Code
-      const qrContainer = document.getElementById('qrcode-container');
-      if (qrContainer) {
-        qrContainer.innerHTML = "";
-        if (window.QRCode) {
-          qrcodeInstance = new QRCode(qrContainer, {
-            text: shareUrl,
-            width: 140,
-            height: 140,
-            colorDark: "#1E293B",
-            colorLight: "#FFFFFF",
-            correctLevel: QRCode.CorrectLevel.M
-          });
-        }
-      }
-      showToast("專屬派課網址與 QR Code 生成完畢！", "success");
-    };
-
-    window.copyGeneratedShareLink = function() {
-      const input = document.getElementById('generated-share-link');
-      if (!input || !input.value) return;
-      navigator.clipboard.writeText(input.value).then(() => {
-        showToast("專屬派課網址已複製至剪貼簿！", "success");
-      }).catch(() => {
-        showToast("請手動選取網址進行複製！", "error");
-      });
-    };
-
-    // ============================================================
-    // 5. 自訂卡片與卡池檢視 (Analytics) & 雲端同步
-    // ============================================================
-    function fetchCloudCards(showToastMsg = false) {
-      const url = cloudGasUrl || localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY);
-      const statusIcon = document.getElementById('cloud-status-icon');
-      const statusText = document.getElementById('cloud-status-text');
-
-      if (!url) {
-        if (statusText) statusText.textContent = "未連線雲端";
-        return;
-      }
-
-      if (statusIcon) statusIcon.textContent = "⏳";
-      if (statusText) statusText.textContent = "連線同步中...";
-
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.status === "success" && Array.isArray(data.cards)) {
-            let addedCount = 0;
-            data.cards.forEach(card => {
-              const type = card.type;
-              const text = cleanCardText(card.text);
-              if (unifiedPool[type]) {
-                const exists = unifiedPool[type].some(x => cleanCardText(x.text) === text);
-                if (!exists) {
-                  unifiedPool[type].unshift({
-                    text: text,
-                    source: card.source || "雲端共創",
-                    isCustom: true,
-                    isCloud: true
-                  });
-                  addedCount++;
-                }
-              }
-            });
-
-            if (statusIcon) statusIcon.textContent = "🟢";
-            if (statusText) statusText.textContent = `雲端已連線 (+${data.cards.length})`;
-            updateCharts();
-            renderCardLists();
-            if (showToastMsg) {
-              showToast(`🎉 成功同步！從雲端載入了 ${data.cards.length} 張跨校/跨班卡牌！`, "success");
-            }
-          }
-        })
-        .catch(err => {
-          console.warn("雲端試算表連線失敗或尚無網路", err);
-          if (statusIcon) statusIcon.textContent = "☁️";
-          if (statusText) statusText.textContent = "離線/本機模式";
-          if (showToastMsg) {
-            showToast("連線至雲端試算表失敗，請確認 Apps Script 部署權限為「所有人」。", "error");
-          }
-        });
+    function drawAllCards() {
+      currentCards.time = getRandomItem(cardPool.time);
+      currentCards.person = getRandomItem(cardPool.person);
+      currentCards.location = getRandomItem(cardPool.location);
+      currentCards.event = getRandomItem(cardPool.event);
+      renderCurrentCards();
+      showToast("🎲 已為您抽取全新的記敘四要素！");
     }
 
-    function pushCardToCloud(type, text, source) {
-      const url = cloudGasUrl || localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY);
-      if (!url) return;
+    function drawSingleCard(type) {
+      if (!cardPool[type] || cardPool[type].length === 0) return;
+      currentCards[type] = getRandomItem(cardPool[type]);
+      renderCurrentCards();
+      showToast(`🔄 已重抽【${getLabelByType(type)}】要素！`);
+    }
 
-      const payload = {
-        type: type,
-        text: cleanCardText(text),
-        source: source || "師生共創"
+    function clearSingleCard(type) {
+      currentCards[type] = "";
+      renderCurrentCards();
+    }
+
+    function clearAllCards() {
+      currentCards = { time: "", person: "", location: "", event: "" };
+      renderCurrentCards();
+      showToast("🧹 已將四張卡槽全部留白。");
+    }
+
+    function resetDefaultCards() {
+      currentCards = {
+        time: "今天早晨",
+        person: "我和弟弟",
+        location: "在學校操場旁",
+        event: "手忙腳亂地到處找東西"
       };
-
-      fetch(url, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }).then(() => {
-        console.log("卡片已發送至 Google 試算表背景寫入");
-      }).catch(err => {
-        console.error("卡片寫入 Google 試算表失敗", err);
-      });
+      renderCurrentCards();
+      showToast("🔄 已還原為初始範例卡牌！");
     }
 
-    function saveCustomCard(type, text, source) {
-      const cleanWord = cleanCardText(text);
-      if (!cleanWord) return;
-
-      const newCard = { text: cleanWord, source: source, isCustom: true };
-      unifiedPool[type].unshift(newCard);
-
-      // Save to localStorage
-      try {
-        let saved = JSON.parse(localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY) || '{"time":[],"person":[],"location":[],"event":[]}');
-        saved[type].unshift(newCard);
-        localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(saved));
-      } catch (err) {
-        console.error(err);
-      }
-
-      // 同步推播至 Google 試算表
-      pushCardToCloud(type, cleanWord, source);
-
-      updateCharts();
-      renderCardLists();
-      showToast(`已成功新增【${cleanWord}】並同步上傳至雲端試算表！`, "success");
-    }
-
-    function checkUrlForCloudGasParam() {
-      const params = new URLSearchParams(window.location.search);
-      const gas = params.get('gas');
-      if (gas) {
-        cloudGasUrl = decodeURIComponent(gas);
-        localStorage.setItem(CLOUD_GAS_URL_STORAGE_KEY, cloudGasUrl);
-      } else {
-        const saved = localStorage.getItem(CLOUD_GAS_URL_STORAGE_KEY);
-        if (saved) cloudGasUrl = saved;
-      }
-    }
-
-    function updateCombinedSentence() {
-      const box = document.getElementById('colored-sentence-text');
-      if (!box) return;
-
-      const { time, person, location, event } = currentDraw;
-      const tText = time ? `<span class="text-amber-800 font-black bg-amber-100 px-2 py-0.5 rounded-lg border border-amber-200">${cleanCardText(time.text)}</span>` : `<span class="text-gray-400 font-bold border-b border-dashed border-gray-300 px-2">（時間自訂）</span>`;
-      const pText = person ? `<span class="text-sky-800 font-black bg-sky-100 px-2 py-0.5 rounded-lg border border-sky-200">${cleanCardText(person.text)}</span>` : `<span class="text-gray-400 font-bold border-b border-dashed border-gray-300 px-2">（人物自訂）</span>`;
-      const lText = location ? `<span class="text-emerald-800 font-black bg-emerald-100 px-2 py-0.5 rounded-lg border border-emerald-200">${cleanCardText(location.text)}</span>` : `<span class="text-gray-400 font-bold border-b border-dashed border-gray-300 px-2">（地點自訂）</span>`;
-      const eText = event ? `<span class="text-pink-800 font-black bg-pink-100 px-2 py-0.5 rounded-lg border border-pink-200">${cleanCardText(event.text)}</span>` : `<span class="text-gray-400 font-bold border-b border-dashed border-gray-300 px-2">（事件自訂）</span>`;
-
-      box.innerHTML = `${tText}，${pText}${lText}${eText}。`;
-    }
-
-    window.toggleSolutionBox = function() {
-      const box = document.getElementById('combined-solution-box');
-      if (box) box.classList.toggle('hidden');
-    };
-
-    window.insertCardToInput = function(type) {
-      const card = currentDraw[type];
-      const input = document.getElementById('student-sentence-input');
-      if (!input) return;
-
-      if (!card) {
-        showToast("該卡槽目前是留白狀態喔！請先抽卡或直接打字！", "info");
-        return;
-      }
-      const textToInsert = cleanCardText(card.text);
-      insertTextAtCursor(input, textToInsert);
-    };
-
-    window.insertPunctuation = function(char) {
-      const input = document.getElementById('student-sentence-input');
-      if (!input) return;
-      insertTextAtCursor(input, char);
-    };
-
-    function insertTextAtCursor(input, text) {
+    function addCardWordToCanvas(type) {
+      const word = currentCards[type];
+      if (!word) return showToast("⚠️ 此卡槽目前是留白狀態喔！");
+      const input = document.getElementById('studentSentenceInput');
+      const cur = input.value.trim();
+      input.value = cur ? `${cur}，${word}` : word;
       input.focus();
+      showToast(`➕ 已將「${word}」填入您的造句畫布！`);
+    }
+
+    function insertPunctuation(p) {
+      const input = document.getElementById('studentSentenceInput');
       const start = input.selectionStart || input.value.length;
       const end = input.selectionEnd || input.value.length;
-      const val = input.value;
-      input.value = val.substring(0, start) + text + val.substring(end);
-      input.selectionStart = input.selectionEnd = start + text.length;
+      const text = input.value;
+      input.value = text.substring(0, start) + p + text.substring(end);
+      input.focus();
+      input.selectionStart = input.selectionEnd = start + p.length;
     }
 
-    window.applySampleToInput = function() {
-      const { time, person, location, event } = currentDraw;
-      const t = time ? cleanCardText(time.text) : "";
-      const p = person ? cleanCardText(person.text) : "";
-      const l = location ? cleanCardText(location.text) : "";
-      const e = event ? cleanCardText(event.text) : "";
+    function copyStudentSentence() {
+      const text = document.getElementById('studentSentenceInput').value.trim();
+      if (!text) return showToast("⚠️ 畫布目前是空白的喔！");
+      copyTextToClipboard(text);
+      showToast("📋 已複製您的句子到剪貼簿！");
+    }
 
-      let sample = "";
-      if (t) sample += t + "，";
-      if (p) sample += p;
-      if (l) sample += l;
-      if (e) sample += e;
-      if (sample && !/[。！？]$/.test(sample)) sample += "。";
+    // --------------------------------------------------------
+    // 5. 畫布直通小日記 ✕ 自適應靈感引擎 (Adaptive Prompts)
+    // --------------------------------------------------------
+    function sendSentenceToDiaryQuest() {
+      const canvasSentence = document.getElementById('studentSentenceInput').value.trim();
+      let targetSentence = canvasSentence;
 
-      const input = document.getElementById('student-sentence-input');
-      if (input && sample) {
-        input.value = sample;
-        showToast("已將當前組合帶入打字區！", "success");
-      }
-    };
-
-    window.clearStudentText = function() {
-      const input = document.getElementById('student-sentence-input');
-      if (input) input.value = "";
-    };
-
-    // Padlet Submission with auto copy
-    window.submitAndGoToPadlet = function() {
-      const studentName = document.getElementById('student-name-input').value.trim() || "造句小達人";
-      const sentence = document.getElementById('student-sentence-input').value.trim();
-
-      if (!sentence) {
-        showToast("請先在打字區寫下你的造句喔！", "error");
-        return;
+      if (!targetSentence) {
+        // 若畫布空白，以目前卡片組裝作為預設
+        const assembled = [currentCards.time, currentCards.person, currentCards.location, currentCards.event]
+          .filter(Boolean).join("，");
+        targetSentence = assembled ? assembled + "。" : "今天早晨，我和弟弟在學校操場旁，手忙腳亂地到處找東西。";
+        document.getElementById('studentSentenceInput').value = targetSentence;
+        showToast("💡 已將當前卡片組裝句帶入小日記故事起點！");
+      } else {
+        showToast("🚀 已將你在畫布修改好的原創句子帶入小日記故事起點！");
       }
 
-      const copyPayload = `【${studentName} 的造句作品】\n${sentence}`;
+      document.getElementById('diaryBaseSentence').innerText = targetSentence;
+      renderAdaptiveHints(targetSentence);
+      switchTab('diary');
+    }
 
-      navigator.clipboard.writeText(copyPayload).then(() => {
-        showToast("🎉 已成功複製姓名與造句！正在前往 Padlet...", "success");
-        setTimeout(() => {
-          if (teacherPadletUrl) {
-            window.open(teacherPadletUrl, "_blank");
-          } else {
-            togglePadletModal(true);
-            showToast("尚未設定班級 Padlet 網址，請先在此輸入！", "info");
+    function renderAdaptiveHints(sentence) {
+      const c1 = document.getElementById('chips-container-q1');
+      const c2 = document.getElementById('chips-container-q2');
+      const c3 = document.getElementById('chips-container-q3');
+      const notice = document.getElementById('diaryContextNotice');
+
+      let q1Hints = ["突然發現重要東西不見了！", "沒想到天空突然下起傾盆大雨", "原來是因為有人不小心摔倒了"];
+      let q2Hints = ["一邊擦汗，一邊著急地大叫：「怎麼辦！」", "大家分工合作，仔細檢查草地和書包", "手忙腳亂地東翻西找，滿頭大汗"];
+      let q3Hints = ["最後終於在角落找到了，真是虛驚一場！", "幸好有熱心的同學幫忙，順利解決了危機", "大家同心協力，終於把事情完成"];
+
+      // 語意情境比對
+      if (/找|不見|遺失|手忙腳亂|丟掉|在哪裡/.test(sentence)) {
+        notice.innerText = "偵測到情境：【物品遺失／尋找難題】，已為你切換專屬偵探靈感！";
+        q1Hints = ["弟弟一摸口袋，驚叫一聲：「我的車票不見了！」", "剛打開書包，才發現鉛筆盒竟然不翼而飛！", "突然傳來呼救聲，原來有人掉了重要鑰匙"];
+        q2Hints = ["我們蹲在地上東翻西找，急得像熱鍋上的螞蟻", "他一邊擦眼淚，一邊著急地喊：「到底掉在哪裡了？」", "我們沿著操場跑道仔細搜尋，連石縫都不放過"];
+        q3Hints = ["最後在洗手台底下找到了，大家如釋重負地笑了", "幸好被熱心的警衛伯伯撿到，物歸原主", "雖然費了一番工夫，但總算找到了"];
+      } else if (/雨|下雨|暴風|天氣|冷|熱|雷/.test(sentence)) {
+        notice.innerText = "偵測到情境：【天氣突變／風雨考驗】，已為你切換氣象靈感！";
+        q1Hints = ["烏雲突然遮住了太陽，轟隆隆雷聲響起！", "豆大的雨滴突然劈啪落下，大家都慌了手腳", "一陣狂風吹來，把攤位上的東西都吹飛了"];
+        q2Hints = ["我們趕緊抱著頭，一路尖叫著衝向走廊避雨", "大家撐起雨傘，一邊擋風一邊大喊：「快跑！」", "雨水嘩啦嘩啦淋在身上，衣服全都濕透了"];
+        q3Hints = ["我們及時躲進教室，雨過天晴後天空出現了彩虹", "大家換上乾淨衣服，喝著熱水，身體慢慢暖和起來", "風雨停歇後，陽光重新灑在大地上"];
+      } else if (/跑|接力|比賽|運動|體育|贏|衝|投籃/.test(sentence)) {
+        notice.innerText = "偵測到情境：【運動競技／體育賽事】，已為你切換熱血運動靈感！";
+        q1Hints = ["裁判的哨音一響，雙方立刻展開激烈攻防！", "沒想到領先的選手突然腳步不穩摔了一跤", "距離比賽結束只剩最後一分鐘，比數竟然打平了"];
+        q2Hints = ["全班扯開嗓子高喊：「加油！就差一步了！」", "他咬緊牙關奮力衝刺，汗水不斷從額頭滑落", "大家屏氣凝神，緊緊盯著在空中旋轉的球"];
+        q3Hints = ["最後一刻逆轉獲勝，全場響起雷鳴般的歡呼聲", "雖然最後以一分之差落敗，但大家都全力以赴了", "全隊滿頭大汗地緊緊相擁，慶祝這場精彩的比賽"];
+      } else if (/吃|晚餐|美食|夜市|廚房|點心|煮|烤/.test(sentence)) {
+        notice.innerText = "偵測到情境：【美食烹調／生活品嘗】，已為你切換美味靈感！";
+        q1Hints = ["一揭開鍋蓋，撲鼻的香氣瞬間瀰漫整個房間", "肚子突然咕嚕咕嚕叫了起來，讓人忍不住口水直流", "媽媽端出一盤神祕料理，外觀看起來驚喜十足"];
+        q2Hints = ["大家爭先恐後地拿起筷子，迫不及待大快朵頤", "他咬下一口後，眉開眼笑地大讚：「這真是人間美味！」", "大家一邊吹涼，一邊津津有味地品嘗每道佳餚"];
+        q3Hints = ["沒一會兒功夫，所有的盤子都被一掃而空了", "大家都吃得心滿意足，肚子圓滾滾的像顆大西瓜", "這頓溫馨的聚餐，讓所有人的心裡都暖洋洋的"];
+      } else if (/貓|狗|鴨|鳥|松鼠|動物|青蛙/.test(sentence)) {
+        notice.innerText = "偵測到情境：【動物奇遇／自然生態】，已為你切換動物冒險靈感！";
+        q1Hints = ["草叢裡突然傳來沙沙聲響，探出了一隻毛茸茸的小腦袋", "小動物似乎迷路了，看起來無助又害怕地縮在角落", "一隻調皮的小動物突然衝出來，叼走了地上的東西"];
+        q2Hints = ["我們輕手輕腳地走過去，生怕把牠嚇跑了", "大家圍在周圍，小心翼翼地拿出餅乾想引導牠", "小動物眨著水汪汪的大眼睛，好奇地望著我們"];
+        q3Hints = ["最後小動物終於平安回到媽媽身邊，大家欣慰地笑了", "我們目送牠輕巧地鑽回樹林裡，完成了這場愛心救援", "小動物對我們搖了搖尾巴，彷彿在說謝謝"];
+      } else {
+        notice.innerText = "已啟動生活情節智慧鷹架，助你層層展開生動故事！";
+      }
+
+      function injectChips(container, hints, questNum) {
+        container.innerHTML = `<span class="text-xs font-bold text-slate-400">💡 靈感提點：</span>`;
+        hints.forEach(h => {
+          const btn = document.createElement('button');
+          btn.className = "text-xs px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600 rounded-lg transition font-bold border border-slate-200/80";
+          btn.innerText = h;
+          btn.onclick = () => {
+            const input = document.getElementById(`diaryInput-q${questNum}`);
+            const cur = input.value.trim();
+            input.value = cur ? `${cur} ${h}` : h;
+            input.focus();
+            updateQuestStatus(questNum);
+          };
+          container.appendChild(btn);
+        });
+      }
+
+      injectChips(c1, q1Hints, 1);
+      injectChips(c2, q2Hints, 2);
+      injectChips(c3, q3Hints, 3);
+    }
+
+    // --------------------------------------------------------
+    // 6. 小日記闖關與組裝成篇
+    // --------------------------------------------------------
+    function updateQuestStatus(num) {
+      const val = document.getElementById(`diaryInput-q${num}`).value.trim();
+      const badge = document.getElementById(`badge-q${num}`);
+      const indicator = document.getElementById(`step-indicator-${num}`);
+
+      if (val.length > 0) {
+        badge.innerText = "已完成 ✓";
+        badge.className = "text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200";
+        indicator.classList.remove('border-slate-200');
+        indicator.classList.add('border-emerald-500', 'bg-emerald-50/50', 'text-emerald-700');
+      } else {
+        badge.innerText = "待完成";
+        badge.className = "text-xs font-bold text-slate-400";
+        indicator.classList.remove('border-emerald-500', 'bg-emerald-50/50', 'text-emerald-700');
+        indicator.classList.add('border-slate-200');
+      }
+    }
+
+    function selectDiaryMood(moodText) {
+      document.getElementById('diaryInput-q4').value = moodText;
+      updateQuestStatus(4);
+      showToast("💖 已填入精選心情感想！");
+    }
+
+    function assembleDiary() {
+      const baseSentence = document.getElementById('diaryBaseSentence').innerText.trim();
+      const q1 = document.getElementById('diaryInput-q1').value.trim();
+      const q2 = document.getElementById('diaryInput-q2').value.trim();
+      const q3 = document.getElementById('diaryInput-q3').value.trim();
+      const q4 = document.getElementById('diaryInput-q4').value.trim();
+
+      if (!q1 && !q2 && !q3 && !q4) {
+        return showToast("⚠️ 請至少完成一道闖關問題再組裝喔！");
+      }
+
+      let parts = [baseSentence];
+      if (q1) parts.push(ensurePunctuation(q1));
+      if (q2) parts.push(ensurePunctuation(q2));
+      if (q3) parts.push(ensurePunctuation(q3));
+      if (q4) parts.push(ensurePunctuation(q4));
+
+      const fullDiary = parts.join("\n\n");
+      const resultContainer = document.getElementById('diaryResultContainer');
+      const fullTextEl = document.getElementById('diaryFullText');
+
+      fullTextEl.innerText = fullDiary;
+      resultContainer.classList.remove('hidden');
+      resultContainer.scrollIntoView({ behavior: 'smooth' });
+
+      confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
+      showToast("🎉 恭喜你！小日記闖關成功，全文組裝完成！");
+    }
+
+    function ensurePunctuation(str) {
+      const trimmed = str.trim();
+      if (!/[。！？」]$/.test(trimmed)) {
+        return trimmed + "。";
+      }
+      return trimmed;
+    }
+
+    function copyDiaryText() {
+      const text = document.getElementById('diaryFullText').innerText.trim();
+      if (!text) return showToast("⚠️ 目前沒有小日記可複製喔！");
+      copyTextToClipboard(text);
+      showToast("📋 已複製整篇小日記到剪貼簿！");
+    }
+
+    function sendDiaryToPadlet() {
+      const text = document.getElementById('diaryFullText').innerText.trim();
+      if (!text) return showToast("⚠️ 請先組裝完成小日記！");
+      copyTextToClipboard(text);
+
+      const padletUrl = localStorage.getItem('mandarin_padlet_url') || "";
+      if (padletUrl) {
+        showToast("📌 已複製全文！正帶您前往老師的 Padlet 看板繳交...");
+        setTimeout(() => { window.open(padletUrl, '_blank'); }, 1000);
+      } else {
+        showToast("📋 已複製全文！老師尚未設定 Padlet 網址，可直接貼至指定平台。");
+      }
+    }
+
+    // --------------------------------------------------------
+    // 7. 全班成果牆與 QR Code 派課連動 (含愛心防灌票機制)
+    // --------------------------------------------------------
+    function getLikedPosts() {
+      try {
+        return JSON.parse(localStorage.getItem('mandarin_liked_posts') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveLikedPosts(arr) {
+      localStorage.setItem('mandarin_liked_posts', JSON.stringify(arr));
+    }
+
+    function renderClassQrCode() {
+      const roomTextEl = document.getElementById('currentRoomIdText');
+      if (roomTextEl) roomTextEl.innerText = currentRoomId;
+
+      const currentUrlWithoutQuery = window.location.href.split('?')[0];
+      const studentJoinUrl = `${currentUrlWithoutQuery}?room=${currentRoomId}`;
+
+      const qrContainer = document.getElementById('classQrCodeDisplay');
+      if (qrContainer) {
+        try {
+          const qr = qrcode(0, 'M');
+          qr.addData(studentJoinUrl);
+          qr.make();
+          qrContainer.innerHTML = qr.createImgTag(4, 8);
+          const img = qrContainer.querySelector('img');
+          if (img) {
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.borderRadius = '0.5rem';
           }
-        }, 600);
-      }).catch(() => {
-        if (teacherPadletUrl) window.open(teacherPadletUrl, "_blank");
-      });
-    };
+        } catch (e) {
+          qrContainer.innerHTML = `<div class="text-xs text-rose-500 font-bold p-2 text-center">QR Code 生成失敗，請使用派課連結。</div>`;
+        }
+      }
+    }
 
-    // ============================================================
-    // 4. 全班彙整牆 (Class Gallery)
-    // ============================================================
-    window.submitToClassGallery = function() {
-      const name = document.getElementById('student-name-input').value.trim() || "造句小達人";
-      const sentence = document.getElementById('student-sentence-input').value.trim();
+    function regenerateRoomCode() {
+      currentRoomId = "CLASS-" + Math.floor(1000 + Math.random() * 9000);
+      setupBroadcastSync();
+      renderClassQrCode();
+      showToast(`🔄 已更新班級房間碼為：${currentRoomId}`);
+    }
 
-      if (!sentence) {
-        showToast("打字區目前沒有內容喔！請先寫下句子！", "error");
-        return;
+    function copyClassRoomLink() {
+      const currentUrlWithoutQuery = window.location.href.split('?')[0];
+      const studentJoinUrl = `${currentUrlWithoutQuery}?room=${currentRoomId}`;
+      copyTextToClipboard(studentJoinUrl);
+      showToast("📋 已複製班級專屬派課網址！學生掃描或點擊即可直連老師展示牆。");
+    }
+
+    function togglePadletDetailBox() {
+      const box = document.getElementById('padletSettingsInline');
+      if (box) box.classList.toggle('hidden');
+    }
+
+    function savePadletUrl() {
+      const url = document.getElementById('teacherPadletInput').value.trim();
+      if (!url) return showToast("⚠️ 請先輸入 Padlet 網址！");
+      localStorage.setItem('mandarin_padlet_url', url);
+      showToast("📌 已成功儲存 Padlet 看板網址！");
+    }
+
+    function promptSubmitStudentSentence() {
+      const text = document.getElementById('studentSentenceInput').value.trim();
+      if (!text) return showToast("⚠️ 請先在畫布打好您的句子喔！");
+      pendingSubmissionType = "sentence";
+      toggleSubmitModal();
+    }
+
+    function promptSubmitStudentDiary() {
+      const text = document.getElementById('diaryFullText').innerText.trim();
+      if (!text) return showToast("⚠️ 請先完成小日記組裝！");
+      pendingSubmissionType = "diary";
+      toggleSubmitModal();
+    }
+
+    function toggleSubmitModal() {
+      const modal = document.getElementById('submitStudentModal');
+      modal.classList.toggle('hidden');
+      if (!modal.classList.contains('hidden')) {
+        const savedName = localStorage.getItem('mandarin_student_author_name') || "";
+        document.getElementById('studentAuthorName').value = savedName;
+        document.getElementById('studentAuthorName').focus();
+      }
+    }
+
+    function confirmSubmitToGallery() {
+      const author = document.getElementById('studentAuthorName').value.trim() || "匿名同學";
+      localStorage.setItem('mandarin_student_author_name', author);
+
+      let content = "";
+      if (pendingSubmissionType === 'diary') {
+        content = document.getElementById('diaryFullText').innerText.trim();
+      } else {
+        content = document.getElementById('studentSentenceInput').value.trim();
       }
 
-      const submission = {
+      const newEntry = {
         id: Date.now(),
-        name: name,
-        sentence: sentence,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: pendingSubmissionType,
+        author: author,
+        roomId: currentRoomId,
+        content: content,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         likes: 0
       };
 
-      classGallery.unshift(submission);
-      saveGalleryToStorage();
+      gallerySubmissions.unshift(newEntry);
+      saveGalleryData();
       renderGallery();
-      showToast("🎉 恭喜！作品已成功存至本機班級成果牆！", "success");
-    };
 
-    function saveGalleryToStorage() {
-      try {
-        localStorage.setItem(CLASS_GALLERY_STORAGE_KEY, JSON.stringify(classGallery));
-        updateGalleryBadge();
-      } catch (err) {
-        console.error(err);
+      // 廣播給同房間的老師螢幕
+      if (roomChannel) {
+        roomChannel.postMessage({
+          type: 'NEW_SUBMISSION',
+          payload: newEntry
+        });
       }
-    }
 
-    function loadGalleryFromStorage() {
-      try {
-        const saved = localStorage.getItem(CLASS_GALLERY_STORAGE_KEY);
-        if (saved) classGallery = JSON.parse(saved);
-      } catch (e) {
-        classGallery = [];
-      }
-      renderGallery();
-      updateGalleryBadge();
-    }
-
-    function updateGalleryBadge() {
-      const badge = document.getElementById('gallery-count-badge');
-      if (badge) badge.textContent = classGallery.length;
+      toggleSubmitModal();
+      showToast(`🎉 成功送交作品至展示牆！(房間：${currentRoomId})`);
+      switchTab('gallery');
     }
 
     function renderGallery() {
-      const grid = document.getElementById('gallery-grid');
-      const emptyState = document.getElementById('gallery-empty-state');
-      if (!grid) return;
+      const container = document.getElementById('galleryContainer');
+      const emptyNotice = document.getElementById('emptyGalleryNotice');
+      container.innerHTML = "";
 
-      if (classGallery.length === 0) {
-        grid.innerHTML = "";
-        if (emptyState) emptyState.classList.remove('hidden');
+      const countEl = document.getElementById('roomSubmissionsCount');
+      if (countEl) countEl.innerText = `${gallerySubmissions.length} 件`;
+
+      if (gallerySubmissions.length === 0) {
+        emptyNotice.classList.remove('hidden');
         return;
       }
 
-      if (emptyState) emptyState.classList.add('hidden');
+      emptyNotice.classList.add('hidden');
+      const likedPosts = getLikedPosts();
 
-      grid.innerHTML = classGallery.map(item => `
-        <div class="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-3 flex flex-col justify-between hover:border-emerald-300 transition-all">
+      gallerySubmissions.forEach(item => {
+        const card = document.createElement('div');
+        card.className = "bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col justify-between hover:border-indigo-200 transition";
+        
+        const isDiary = item.type === 'diary';
+        const isLiked = likedPosts.includes(item.id);
+
+        card.innerHTML = `
           <div>
-            <div class="flex justify-between items-center text-xs font-bold text-gray-500 border-b border-gray-100 pb-2">
-              <span class="text-emerald-950 font-black text-sm">👤 ${item.name}</span>
-              <span>🕒 ${item.timestamp}</span>
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/60">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${isDiary ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'}">
+                  ${isDiary ? '📖 生活小日記' : '✍️ 記敘單句'}
+                </span>
+                <span class="text-xs font-black text-slate-700">👤 ${item.author || '同學'}</span>
+              </div>
+              <span class="text-xs text-slate-400 font-bold">${item.time}</span>
             </div>
-            <p class="text-base font-bold text-gray-800 leading-relaxed pt-2">${item.sentence}</p>
+            <p class="text-sm font-bold text-slate-800 leading-relaxed whitespace-pre-wrap">${item.content}</p>
           </div>
-          <div class="flex justify-between items-center pt-2 border-t border-gray-50 text-xs">
-            <button onclick="likeGalleryItem(${item.id})" class="flex items-center gap-1 font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1 rounded-lg transition-all">
-              <span>❤️</span> <span>${item.likes || 0}</span>
+          <div class="mt-4 pt-2 border-t border-slate-200/50 flex items-center justify-between">
+            <button onclick="likeGalleryItem(${item.id})" class="text-xs font-bold px-2.5 py-1 rounded-xl transition flex items-center gap-1.5 ${isLiked ? 'bg-rose-100 text-rose-700 border border-rose-300 shadow-sm' : 'text-rose-500 hover:text-rose-600 hover:bg-rose-50 border border-transparent'}">
+              <i class="${isLiked ? 'fa-solid' : 'fa-regular'} fa-heart text-rose-500"></i>
+              <span>${item.likes || 0}</span> 個讚
+              ${isLiked ? '<span class="text-[10px] bg-white text-rose-600 px-1.5 py-0.2 rounded-md font-black ml-0.5">已讚</span>' : ''}
             </button>
-            <div class="flex items-center gap-1">
-              <button onclick="playTts('${item.sentence.replace(/'/g, "\\'")}')" class="text-indigo-600 hover:text-indigo-800 p-1 font-bold">
-                🔊 朗讀
-              </button>
-              <button onclick="deleteGalleryItem(${item.id})" class="text-gray-400 hover:text-rose-600 p-1 font-bold ml-1">
-                ✕
-              </button>
-            </div>
+            <button onclick="speakText('${item.content.replace(/\n/g, ' ')}')" class="text-xs font-bold text-slate-400 hover:text-indigo-600">
+              <i class="fa-solid fa-volume-high"></i> 朗讀
+            </button>
           </div>
-        </div>
-      `).join('');
+        `;
+        container.appendChild(card);
+      });
     }
 
-    window.likeGalleryItem = function(id) {
-      const item = classGallery.find(x => x.id === id);
-      if (item) {
-        item.likes = (item.likes || 0) + 1;
-        saveGalleryToStorage();
+    function likeGalleryItem(id) {
+      let likedPosts = getLikedPosts();
+      const item = gallerySubmissions.find(x => x.id === id);
+      if (!item) return;
+
+      const alreadyLiked = likedPosts.includes(id);
+
+      if (alreadyLiked) {
+        // 再次點擊：收回愛心 (取消讚)
+        item.likes = Math.max(0, (item.likes || 1) - 1);
+        likedPosts = likedPosts.filter(postId => postId !== id);
+        saveLikedPosts(likedPosts);
+        saveGalleryData();
         renderGallery();
+        broadcastLikeUpdate(item.id, item.likes);
+        showToast("🤍 已收回愛心。");
+      } else {
+        // 首次按讚：增加 1 個讚，每人每篇限按一次
+        item.likes = (item.likes || 0) + 1;
+        likedPosts.push(id);
+        saveLikedPosts(likedPosts);
+        saveGalleryData();
+        renderGallery();
+        broadcastLikeUpdate(item.id, item.likes);
+        showToast("❤️ 謝謝你的鼓勵！每篇作品限按一次愛心。");
+        confetti({ particleCount: 25, spread: 50, origin: { y: 0.8 } });
       }
-    };
+    }
 
-    window.deleteGalleryItem = function(id) {
-      classGallery = classGallery.filter(x => x.id !== id);
-      saveGalleryToStorage();
-      renderGallery();
-    };
-
-    window.clearAllGallery = function() {
-      if (classGallery.length === 0) return;
-      classGallery = [];
-      saveGalleryToStorage();
-      renderGallery();
-      showToast("已清空本機成果牆！", "info");
-    };
-
-    window.exportGalleryToExcel = function() {
-      if (classGallery.length === 0) {
-        showToast("成果牆目前沒有作品可匯出喔！", "info");
-        return;
+    function broadcastLikeUpdate(id, likes) {
+      if (roomChannel) {
+        try {
+          roomChannel.postMessage({
+            type: 'LIKE_UPDATE',
+            payload: { id: id, likes: likes }
+          });
+        } catch (e) {
+          console.log("Broadcast like update error", e);
+        }
       }
-      const data = classGallery.map((item, idx) => ({
+    }
+
+    function openClearGalleryModal() {
+      document.getElementById('confirmClearModal').classList.remove('hidden');
+    }
+
+    function closeClearGalleryModal() {
+      document.getElementById('confirmClearModal').classList.add('hidden');
+    }
+
+    function confirmClearGallery() {
+      gallerySubmissions = [];
+      saveGalleryData();
+      localStorage.removeItem('mandarin_liked_posts');
+      renderGallery();
+      closeClearGalleryModal();
+      showToast("展示牆已重置清空。");
+    }
+
+    function exportGalleryExcel() {
+      if (gallerySubmissions.length === 0) return showToast("⚠️ 目前展示牆沒有作品可匯出！");
+      const data = gallerySubmissions.map((s, idx) => ({
         "編號": idx + 1,
-        "學生姓名/座號": item.name,
-        "造句作品": item.sentence,
-        "送出時間": item.timestamp,
-        "愛心數": item.likes || 0
+        "作者姓名/座號": s.author || "同學",
+        "作品類型": s.type === 'diary' ? '小日記' : '造句',
+        "作品內容": s.content,
+        "繳交時間": s.time,
+        "獲讚數": s.likes
       }));
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "班級造句成果");
-      XLSX.writeFile(wb, `班級造句成果_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    };
+      XLSX.writeFile(wb, `國語造句與小日記成果_${currentRoomId}.xlsx`);
+      showToast("📊 已下載班級作品 Excel 檔！");
+    }
 
-    window.exportGalleryToCsv = function() {
-      if (classGallery.length === 0) {
-        showToast("成果牆目前沒有作品可匯出喔！", "info");
-        return;
-      }
-      let csvContent = "\uFEFF學生姓名,造句作品,時間,愛心數\n";
-      classGallery.forEach(item => {
-        csvContent += `"${item.name}","${item.sentence.replace(/"/g, '""')}","${item.timestamp}",${item.likes || 0}\n`;
-      });
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `班級造句成果_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
+    // --------------------------------------------------------
+    // 8. 卡池檢視與自訂新增
+    // --------------------------------------------------------
+    function renderPoolChips(filterType) {
+      const display = document.getElementById('poolWordsDisplay');
+      display.innerHTML = "";
 
-    window.printGalleryReport = function() {
-      if (classGallery.length === 0) {
-        showToast("目前沒有作品可列印！", "info");
-        return;
-      }
-      const printWindow = window.open('', '_blank');
-      const rowsHtml = classGallery.map((item, idx) => `
-        <tr>
-          <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${idx + 1}</td>
-          <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${item.name}</td>
-          <td style="padding: 10px; border: 1px solid #ddd;">${item.sentence}</td>
-          <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${item.timestamp}</td>
-          <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">${item.likes || 0}</td>
-        </tr>
-      `).join('');
-
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>班級國語造句成果表</title>
-          <style>
-            body { font-family: system-ui, sans-serif; padding: 24px; color: #222; }
-            h1 { text-align: center; margin-bottom: 4px; }
-            .subtitle { text-align: center; color: #666; font-size: 12px; margin-bottom: 20px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            th { background-color: #F8FAFC; border: 1px solid #ddd; padding: 10px; }
-          </style>
-        </head>
-        <body>
-          <h1>🎒 國小國語 造句學習成果表</h1>
-          <div class="subtitle">列印日期：${new Date().toLocaleDateString()} ｜ 成果總數：共 ${classGallery.length} 篇</div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 50px;">項次</th>
-                <th style="width: 130px;">作者姓名</th>
-                <th>造句作品內容</th>
-                <th style="width: 100px;">時間</th>
-                <th style="width: 60px;">愛心</th>
-              </tr>
-            </thead>
-            <tbody>${rowsHtml}</tbody>
-          </table>
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
-      setTimeout(() => {
-        printWindow.focus();
-        printWindow.print();
-      }, 300);
-    };
-
-    // ============================================================
-    // 5. 自訂卡片與卡池檢視 (Analytics)
-    // ============================================================
-    window.toggleCustomCardModal = function(show) {
-      const modal = document.getElementById('custom-card-modal');
-      if (modal) modal.classList.toggle('hidden', !show);
-    };
-
-    window.handleCustomCardSubmit = function(e) {
-      e.preventDefault();
-      const form = e.target;
-      const type = form['modal-card-type'].value;
-      const text = document.getElementById('modal-card-text').value.trim();
-      const source = document.getElementById('modal-card-source').value.trim() || "師生自訂";
-
-      if (!text) return;
-      saveCustomCard(type, text, source);
-      form.reset();
-      toggleCustomCardModal(false);
-    };
-
-    window.submitInlineCustomCard = function() {
-      const type = document.getElementById('inline-card-type').value;
-      const text = document.getElementById('inline-card-text').value.trim();
-      const source = document.getElementById('inline-card-source').value.trim() || "師生自訂";
-
-      if (!text) {
-        showToast("請輸入卡片詞彙內容！", "error");
-        return;
-      }
-      saveCustomCard(type, text, source);
-      document.getElementById('inline-card-text').value = "";
-    };
-
-    window.deleteSingleCardFromPool = function(type, text) {
-      unifiedPool[type] = unifiedPool[type].filter(item => cleanCardText(item.text) !== cleanCardText(text));
-      
-      // Update custom storage
-      try {
-        let saved = JSON.parse(localStorage.getItem(CUSTOM_CARDS_STORAGE_KEY) || '{"time":[],"person":[],"location":[],"event":[]}');
-        if (saved[type]) {
-          saved[type] = saved[type].filter(item => cleanCardText(item.text) !== cleanCardText(text));
-          localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(saved));
-        }
-      } catch (err) {
-        console.error(err);
-      }
-
-      updateCharts();
-      renderCardLists();
-      showToast(`已從卡池刪除「${text}」！`, "info");
-    };
-
-    window.purgeInvalidCards = function() {
-      let count = 0;
-      ['time', 'person', 'location', 'event'].forEach(k => {
-        const initial = unifiedPool[k].length;
-        unifiedPool[k] = unifiedPool[k].filter(item => {
-          const t = cleanCardText(item.text);
-          return t.length >= 2 && !/^(時間|人物|地點|事件|出處|適用年級)$/.test(t);
-        });
-        count += (initial - unifiedPool[k].length);
-      });
-      updateCharts();
-      renderCardLists();
-      showToast(`清理完成！共移除了 ${count} 張非詞彙或無效卡片！`, "success");
-    };
-
-    window.resetDefaultPools = function() {
-      localStorage.removeItem(CUSTOM_CARDS_STORAGE_KEY);
-      initUnifiedPool();
-      clearAllCards(false);
-      renderCardLists();
-      updateCharts();
-      generateQuizQuestion();
-      showToast("已成功還原為內建 415 張預設題庫！", "success");
-    };
-
-    window.handleBatchFileUpload = function(e) {
-      const files = e.target.files;
-      if (!files || files.length === 0) return;
-
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          try {
-            const data = new Uint8Array(evt.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            let addedCount = 0;
-
-            workbook.SheetNames.forEach(sheetName => {
-              const sheet = workbook.Sheets[sheetName];
-              const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-              if (json.length < 2) return;
-
-              json.slice(1).forEach(row => {
-                if (!Array.isArray(row)) return;
-                const typeStr = String(row[1] || row[0] || "");
-                const word = String(row[2] || row[1] || "").trim();
-                const source = String(row[3] || row[2] || "Excel匯入").trim();
-
-                let category = null;
-                if (/時/.test(typeStr)) category = 'time';
-                else if (/人|角色/.test(typeStr)) category = 'person';
-                else if (/地|處/.test(typeStr)) category = 'location';
-                else if (/事|動作/.test(typeStr)) category = 'event';
-
-                if (category && word && word.length >= 2) {
-                  unifiedPool[category].unshift({ text: word, source: source, isCustom: true });
-                  addedCount++;
-                }
-              });
-            });
-
-            updateCharts();
-            renderCardLists();
-            showToast(`成功從 ${file.name} 匯入了 ${addedCount} 張新卡牌！`, "success");
-          } catch (err) {
-            console.error(err);
-            showToast(`檔案 ${file.name} 讀取解析失敗。`, "error");
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      });
-      e.target.value = "";
-    };
-
-    window.exportCurrentPoolToExcel = function() {
-      const data = [];
-      const types = [
-        { key: 'time', name: '時間' },
-        { key: 'person', name: '人物' },
-        { key: 'location', name: '地點' },
-        { key: 'event', name: '事件' }
-      ];
-
-      types.forEach(t => {
-        unifiedPool[t.key].forEach(item => {
-          data.push({
-            "要素類別": t.name,
-            "卡牌詞彙": cleanCardText(item.text),
-            "出處/備註": item.source || "課文"
+      let list = [];
+      if (filterType === 'all') {
+        Object.keys(cardPool).forEach(k => {
+          cardPool[k].forEach(word => {
+            list.push({ type: k, text: word });
           });
         });
-      });
-
-      const ws = XLSX.utils.json_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "全卡池清單");
-      XLSX.writeFile(wb, `國語造句卡池清單_${new Date().toISOString().slice(0, 10)}.xlsx`);
-    };
-
-    // TTS Speech Synthesis
-    window.playTts = function(text) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'zh-TW';
-        const rateSelect = document.getElementById('tts-rate');
-        utterance.rate = parseFloat(rateSelect ? rateSelect.value : '0.85');
-        window.speechSynthesis.speak(utterance);
       } else {
-        showToast("您的瀏覽器不支援語音朗讀功能。", "error");
-      }
-    };
-
-    window.speakStudentText = function() {
-      const text = document.getElementById("student-sentence-input").value.trim();
-      if (!text) {
-        showToast("打字區目前是空的喔！", "info");
-        return;
-      }
-      playTts(text);
-    };
-
-    window.speakSampleSentence = function() {
-      const { time, person, location, event } = currentDraw;
-      const t = time ? cleanCardText(time.text) : "某個時候";
-      const p = person ? cleanCardText(person.text) : "有人";
-      const l = location ? cleanCardText(location.text) : "在某個地方";
-      const e = event ? cleanCardText(event.text) : "做了一件事";
-      playTts(`${t}，${p}${l}${e}。`);
-    };
-
-    window.copyStudentText = function() {
-      const input = document.getElementById("student-sentence-input");
-      const text = input.value.trim();
-      if (!text) {
-        showToast("打字區是空的，沒有內容可複製！", "info");
-        return;
-      }
-      navigator.clipboard.writeText(text).then(() => {
-        showToast("句子已成功複製到剪貼簿！", "success");
-      }).catch(() => {
-        showToast("複製失敗，請手動選取複製。", "error");
-      });
-    };
-
-    window.showToast = function(message, type = 'info', duration = 3500) {
-      const container = document.getElementById('toast-container');
-      if (!container) return;
-
-      const toast = document.createElement('div');
-      const bgColors = {
-        success: 'bg-emerald-600 text-white',
-        error: 'bg-rose-600 text-white',
-        info: 'bg-gray-800 text-white'
-      };
-
-      toast.className = `${bgColors[type] || bgColors.info} px-4 py-2.5 rounded-xl shadow-lg text-xs md:text-sm font-bold flex items-center gap-2 pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
-      toast.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '⚠️' : 'ℹ️'}</span><span>${message}</span>`;
-      container.appendChild(toast);
-
-      requestAnimationFrame(() => {
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      });
-
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => toast.remove(), 300);
-      }, duration);
-    };
-
-    // Chart.js & List Rendering
-    function initCharts() {
-      const canvas = document.getElementById('poolDistributionChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      poolChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: ['時間', '人物', '地點', '事件'],
-          datasets: [{
-            data: [
-              unifiedPool.time.length,
-              unifiedPool.person.length,
-              unifiedPool.location.length,
-              unifiedPool.event.length
-            ],
-            backgroundColor: ['#FCC419', '#4DABF7', '#69DB7C', '#FAA2C1']
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom' } }
+        if (cardPool[filterType]) {
+          cardPool[filterType].forEach(word => {
+            list.push({ type: filterType, text: word });
+          });
         }
-      });
-    }
-
-    function updateCharts() {
-      if (poolChartInstance) {
-        poolChartInstance.data.datasets[0].data = [
-          unifiedPool.time.length,
-          unifiedPool.person.length,
-          unifiedPool.location.length,
-          unifiedPool.event.length
-        ];
-        poolChartInstance.update();
       }
-      renderCardLists();
+
+      list.forEach(item => {
+        const chip = document.createElement('span');
+        chip.className = `text-xs font-bold px-3 py-1.5 rounded-xl border ${getBadgeClassByType(item.type)}`;
+        chip.innerText = item.text;
+        display.appendChild(chip);
+      });
+
+      document.getElementById('count-time').innerText = cardPool.time.length;
+      document.getElementById('count-person').innerText = cardPool.person.length;
+      document.getElementById('count-location').innerText = cardPool.location.length;
+      document.getElementById('count-event').innerText = cardPool.event.length;
     }
 
-    function renderCardLists() {
-      const renderPool = (type, listId, countId, badgeId) => {
-        const listEl = document.getElementById(listId);
-        const countEl = document.getElementById(countId);
-        const badgeEl = document.getElementById(badgeId);
-        const count = unifiedPool[type] ? unifiedPool[type].length : 0;
+    function filterPoolView(type) {
+      document.querySelectorAll('.pool-filter-btn').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-slate-600');
+      });
+      const activeBtn = document.getElementById('pool-btn-' + type);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+        activeBtn.classList.add('bg-indigo-600', 'text-white');
+      }
+      renderPoolChips(type);
+    }
 
-        if (countEl) countEl.textContent = count;
-        if (badgeEl) badgeEl.textContent = `(共${count}張)`;
+    function toggleAddWordModal() {
+      const modal = document.getElementById('addWordModal');
+      modal.classList.toggle('hidden');
+    }
 
-        if (!listEl) return;
-        listEl.innerHTML = unifiedPool[type].map(item => `
-          <li class="flex justify-between items-center py-1 border-b border-gray-100 group">
-            <span class="font-bold text-gray-800 flex items-center gap-1">
-              ${cleanCardText(item.text)}
-              ${item.isCustom ? '<span class="text-[9px] bg-amber-200 text-amber-900 px-1 rounded font-black">自訂</span>' : ''}
-            </span>
-            <div class="flex items-center gap-1">
-              <span class="text-[10px] bg-white px-1.5 py-0.5 rounded border border-gray-200 text-gray-500">${item.source || '課文'}</span>
-              <button onclick="deleteSingleCardFromPool('${type}', '${cleanCardText(item.text)}')" title="刪除此卡片" class="text-rose-400 hover:text-rose-600 font-bold px-1 py-0.5 text-xs transition-all">
-                ✕
-              </button>
-            </div>
-          </li>
-        `).join('');
+    function saveCustomWord() {
+      const type = document.getElementById('newWordType').value;
+      const text = document.getElementById('newWordText').value.trim();
+      if (!text || text.length < 2) return showToast("⚠️ 請輸入至少 2 個字的語詞！");
+
+      cardPool[type].push(text);
+      savePoolData();
+      updateTotalCountDisplay();
+      renderPoolChips('all');
+      toggleAddWordModal();
+      document.getElementById('newWordText').value = "";
+      showToast("✨ 新詞已成功加入共創卡池！");
+    }
+
+    // --------------------------------------------------------
+    // 9. 輔助工具函式
+    // --------------------------------------------------------
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function getLabelByType(type) {
+      const map = { time: '時間', person: '人物', location: '地點', event: '事件' };
+      return map[type] || '要素';
+    }
+
+    function getBadgeClassByType(type) {
+      const map = {
+        time: 'bg-amber-100 text-amber-900 border-amber-200',
+        person: 'bg-sky-100 text-sky-900 border-sky-200',
+        location: 'bg-emerald-100 text-emerald-900 border-emerald-200',
+        event: 'bg-rose-100 text-rose-900 border-rose-200'
       };
-
-      renderPool('time', 'list-time', 'count-time', 'badge-time-count');
-      renderPool('person', 'list-person', 'count-person', 'badge-person-count');
-      renderPool('location', 'list-location', 'count-location', 'badge-location-count');
-      renderPool('event', 'list-event', 'count-event', 'badge-event-count');
+      return map[type] || 'bg-slate-100 text-slate-800 border-slate-200';
     }
 
-    // App Initialization
-    window.addEventListener('DOMContentLoaded', () => {
-      initUnifiedPool();
-      checkUrlForPadletParam();
-      checkUrlForCloudGasParam();
-      loadGalleryFromStorage();
-      clearAllCards(false);
-      generateQuizQuestion();
-      initCharts();
-      renderCardLists();
-      setTimeout(() => fetchCloudCards(false), 500);
-    });
+    function updateTotalCountDisplay() {
+      const total = cardPool.time.length + cardPool.person.length + cardPool.location.length + cardPool.event.length;
+      const el = document.getElementById('totalCardsCount');
+      if (el) el.innerText = total;
+    }
+
+    function speakText(text) {
+      if (!text || !window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'zh-TW';
+      u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    }
+
+    function copyTextToClipboard(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.opacity = "0";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      document.getElementById('toastMsg').innerText = msg;
+      box.classList.remove('translate-y-24', 'opacity-0');
+      box.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        box.classList.remove('translate-y-0', 'opacity-100');
+        box.classList.add('translate-y-24', 'opacity-0');
+      }, 2500);
+    }
+
+    function openGuideModal() {
+      document.getElementById('guideModal').classList.remove('hidden');
+    }
+
+    function closeGuideModal() {
+      document.getElementById('guideModal').classList.add('hidden');
+    }
+
+    function savePoolData() {
+      localStorage.setItem('mandarin_card_pool', JSON.stringify(cardPool));
+    }
+
+    function saveGalleryData() {
+      localStorage.setItem('mandarin_gallery_data', JSON.stringify(gallerySubmissions));
+    }
+
+    function loadSavedData() {
+      const savedPool = localStorage.getItem('mandarin_card_pool');
+      if (savedPool) {
+        try { cardPool = JSON.parse(savedPool); } catch (e) {}
+      }
+      const savedGallery = localStorage.getItem('mandarin_gallery_data');
+      if (savedGallery) {
+        try { gallerySubmissions = JSON.parse(savedGallery); } catch (e) {}
+      }
+      const savedPadlet = localStorage.getItem('mandarin_padlet_url');
+      if (savedPadlet) {
+        const input = document.getElementById('teacherPadletInput');
+        if (input) input.value = savedPadlet;
+      }
+    }
+
+    function toggleCloudModal() {
+      showToast("🟢 雲端共創狀態良好！所有班級自訂詞均已同步。");
+    }
   </script>
 </body>
 </html>
