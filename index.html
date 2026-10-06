@@ -99,6 +99,72 @@
         </div>
 
       </div>
+    </div>
+
+    <!-- 頁籤導覽列 (Tabs Navigation) -->
+    <div class="bg-slate-50 border-t border-slate-200 px-4 sm:px-8">
+      <div class="max-w-7xl mx-auto flex items-center justify-between overflow-x-auto py-2 gap-2">
+        <div class="flex items-center gap-1 sm:gap-2">
+          <button id="tab-quiz" onclick="switchTab('quiz')" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 text-slate-500 hover:text-indigo-600">
+            <span>🧩 完整句小達人</span>
+          </button>
+          <button id="tab-workbench" onclick="switchTab('workbench')" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-200">
+            <span>✍️ 造句抽卡池</span>
+          </button>
+          <button id="tab-diary" onclick="switchTab('diary')" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 text-slate-500 hover:text-indigo-600">
+            <span>📖 小日記闖關賽</span>
+            <span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.2 rounded-full font-bold ml-1">HOT</span>
+          </button>
+          <button id="tab-gallery" onclick="switchTab('gallery')" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 text-slate-500 hover:text-indigo-600">
+            <span>🏆 全班成果牆</span>
+          </button>
+          <button id="tab-pool" onclick="switchTab('pool')" class="tab-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black transition flex items-center gap-1.5 text-slate-500 hover:text-indigo-600">
+            <span>📊 415卡池檢視</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow">
+
+    <!-- ====================================================== -->
+    <!-- 頁籤 1：🧩 完整句小達人 (病句診斷 - 找出缺少要素) -->
+    <!-- ====================================================== -->
+    <section id="section-quiz" class="tab-section hidden">
+      <div class="max-w-3xl mx-auto space-y-6">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-indigo-100 shadow-sm space-y-5">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">🧩</span>
+              <h2 class="text-lg sm:text-xl font-black text-slate-800">句子診斷大考驗：這句話缺少了什麼？</h2>
+            </div>
+            <span id="quizSource" class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-200">出處載入中...</span>
+          </div>
+
+          <div class="p-5 sm:p-6 bg-slate-50 border-2 border-slate-200/80 rounded-2xl text-center">
+            <p id="quizSentence" class="text-lg sm:text-2xl font-black text-slate-800 tracking-wide leading-relaxed">
+              載入題目中...
+            </p>
+          </div>
+
+          <div>
+            <p class="text-xs font-bold text-slate-400 mb-2">請點選你認為這句話「最缺乏」的核心記敘要素：</p>
+            <div id="quizOptions" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <!-- JS 動態生成選項按鈕 -->
+            </div>
+          </div>
+
+          <div id="quizFeedback" class="hidden rounded-2xl p-4 transition-all"></div>
+
+          <div class="flex justify-end pt-2">
+            <button onclick="nextQuizQuestion()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs sm:text-sm rounded-xl transition flex items-center gap-1.5 shadow-md">
+              <span>下一題診斷</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ====================================================== -->
@@ -1089,10 +1155,17 @@
 
     function renderQuizQuestion(index) {
       const q = QUIZ_QUESTIONS[index];
-      document.getElementById('quizSentence').innerText = q.sentence;
-      document.getElementById('quizSource').innerText = `出處：${q.source}`;
-      
+      const sentenceEl = document.getElementById('quizSentence');
+      const sourceEl = document.getElementById('quizSource');
       const feedback = document.getElementById('quizFeedback');
+      const container = document.getElementById('quizOptions');
+
+      // 防呆檢查：若元素不存在則安全返回，避免拋出 TypeError
+      if (!sentenceEl || !sourceEl || !feedback || !container) return;
+
+      sentenceEl.innerText = q.sentence;
+      sourceEl.innerText = `出處：${q.source}`;
+      
       feedback.className = "hidden rounded-2xl p-4 transition-all";
       feedback.innerHTML = "";
 
@@ -1103,7 +1176,6 @@
         { key: 'event', label: '⚡ 事件動作' }
       ];
 
-      const container = document.getElementById('quizOptions');
       container.innerHTML = "";
 
       options.forEach(opt => {
