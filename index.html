@@ -15,6 +15,8 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- QRCode Generator CDN -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+  <!-- MQTT.js for Real-time Cross-Device Synchronization -->
+  <script src="https://unpkg.com/mqtt@5.3.5/dist/mqtt.min.js"></script>
   <!-- Google Fonts: Noto Sans TC -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,90 +92,9 @@
             <i class="fa-regular fa-circle-question"></i>
             <span class="hidden sm:inline">玩法指引</span>
           </button>
-          <button onclick="toggleCloudModal()" class="px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl transition flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="hidden sm:inline">雲端狀態</span>
-          </button>
-        </div>
-
-      </div>
-
-      <!-- 導覽頁籤 (Tabs) -->
-      <nav class="flex space-x-1 sm:space-x-3 overflow-x-auto pb-2 scrollbar-none text-sm font-black border-t border-slate-100 pt-2">
-        <button id="tab-quiz" onclick="switchTab('quiz')" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/70 transition flex items-center gap-1.5 whitespace-nowrap">
-          <span>🧩 完整句小達人</span>
-        </button>
-        <button id="tab-workbench" onclick="switchTab('workbench')" class="tab-btn px-3.5 py-2 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-200 flex items-center gap-1.5 whitespace-nowrap">
-          <span>✍️ 造句抽卡池</span>
-        </button>
-        <button id="tab-diary" onclick="switchTab('diary')" class="tab-btn px-3.5 py-2 rounded-xl text-purple-600 hover:bg-purple-50 transition flex items-center gap-1.5 whitespace-nowrap">
-          <span>📖 小日記闖關賽</span>
-          <span class="text-[10px] bg-rose-500 text-white font-black px-1.5 py-0.5 rounded-full">NEW</span>
-        </button>
-        <button id="tab-gallery" onclick="switchTab('gallery')" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/70 transition flex items-center gap-1.5 whitespace-nowrap">
-          <span>🏆 全班成果牆</span>
-        </button>
-        <button id="tab-pool" onclick="switchTab('pool')" class="tab-btn px-3.5 py-2 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50/70 transition flex items-center gap-1.5 whitespace-nowrap">
-          <span>📊 卡池檢視與自訂</span>
-        </button>
-      </nav>
-    </div>
-  </header>
-
-  <!-- ======================================================== -->
-  <!-- 主內容區域 (Container) -->
-  <!-- ======================================================== -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow">
-
-    <!-- ====================================================== -->
-    <!-- 頁籤 1：🧩 完整句小達人 (病句偵測與診斷) -->
-    <!-- ====================================================== -->
-    <section id="section-quiz" class="tab-section hidden">
-      <div class="max-w-3xl mx-auto space-y-6">
-        
-        <!-- 引導說明卡 -->
-        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg">
-          <div class="flex items-center gap-3 mb-2">
-            <span class="text-3xl">🕵️‍♂️️</span>
-            <h2 class="text-xl sm:text-2xl font-black">小小句子偵探：猜猜看少了什麼？</h2>
-          </div>
-          <p class="text-xs sm:text-sm text-indigo-100 font-medium leading-relaxed">
-            一個完整的記敘句子，通常包含「時間、人物、地點、事件動作」。請讀一讀下面的課文句子，找出到底遺漏了哪一個要素？
-          </p>
-        </div>
-
-        <!-- 測驗題卡 -->
-        <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-slate-200 shadow-sm space-y-6">
-          <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-            <span class="text-xs font-bold px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
-              <i class="fa-solid fa-book-open mr-1"></i> 課文例句診斷
-            </span>
-            <span id="quizSource" class="text-xs font-bold text-slate-400">出處：康軒國語第 02 課</span>
-          </div>
-
-          <!-- 題目展示區 -->
-          <div class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center">
-            <p class="text-xs font-bold text-slate-400 mb-2">請仔細朗讀這句話：</p>
-            <p id="quizSentence" class="text-lg sm:text-2xl font-black text-slate-800 leading-relaxed tracking-wider"></p>
-          </div>
-
-          <!-- 選項按鈕區 -->
-          <div>
-            <p class="text-xs font-bold text-slate-400 mb-3 text-center">這句話最明顯缺少了哪一塊重要要素？</p>
-            <div id="quizOptions" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <!-- JS 動態生成選項 -->
-            </div>
-          </div>
-
-          <!-- 診斷回饋 -->
-          <div id="quizFeedback" class="hidden rounded-2xl p-4 transition-all"></div>
-
-          <!-- 下一題按鈕 -->
-          <div class="flex justify-end pt-2">
-            <button onclick="nextQuizQuestion()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-xl transition flex items-center gap-2 shadow-sm">
-              <span>下一題挑戰</span>
-              <i class="fa-solid fa-arrow-right"></i>
-            </button>
+          <div id="cloudStatusBadge" class="px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-xl transition flex items-center gap-1.5">
+            <span id="cloudStatusDot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span id="cloudStatusText" class="hidden sm:inline">連線中...</span>
           </div>
         </div>
 
@@ -554,7 +475,7 @@
               <div class="flex items-center gap-2">
                 <span class="text-2xl">📱</span>
                 <h3 class="font-black text-xl text-white">老師專屬班級 QR Code 派課看板</h3>
-                <span id="roomStatusBadge" class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold">🟢 班級即時接收室已連線</span>
+                <span id="roomStatusBadge" class="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold">🟢 跨載具雲端同步已連線</span>
               </div>
               <p class="text-xs sm:text-sm text-indigo-200 mt-1 font-medium">把這個 QR Code 投影在黑板或電子白板上，學生用平板掃描後，造句與小日記就會直接飛到老師這面展示牆！</p>
             </div>
@@ -934,6 +855,7 @@
     let currentRoomId = "CLASS-" + Math.floor(1000 + Math.random() * 9000);
     let pendingSubmissionType = "sentence";
     let roomChannel = null;
+    let mqttClient = null;
 
     // --------------------------------------------------------
     // 2. 初始化與分頁切換
@@ -943,8 +865,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       const roomParam = urlParams.get('room');
       if (roomParam) {
-        currentRoomId = roomParam;
-        showToast(`🟢 已連線至專屬班級房間：${currentRoomId}`);
+        currentRoomId = roomParam.trim().toUpperCase();
       }
 
       loadSavedData();
@@ -957,28 +878,178 @@
       
       // 初始情境自適應靈感
       renderAdaptiveHints(document.getElementById('diaryBaseSentence').innerText);
+      
+      // 啟動本機與真正的跨載具雲端雙向即時連線
       setupBroadcastSync();
+      initMqttSync();
     };
+
+    // --------------------------------------------------------
+    // 跨載具雲端即時同步引擎 (MQTT over WebSocket)
+    // --------------------------------------------------------
+    function getRoomTopicPrefix() {
+      return `yilin_mandarin_camp/${currentRoomId}`;
+    }
+
+    function updateNetworkStatus(status, text) {
+      const dot = document.getElementById('cloudStatusDot');
+      const label = document.getElementById('cloudStatusText');
+      const container = document.getElementById('cloudStatusBadge');
+      const roomBadge = document.getElementById('roomStatusBadge');
+
+      if (!dot || !label) return;
+
+      if (status === 'online') {
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+        label.innerText = `🟢 雲端同步：${currentRoomId}`;
+        container.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl transition flex items-center gap-1.5";
+        if (roomBadge) {
+          roomBadge.className = "text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 px-2.5 py-0.5 rounded-full font-bold";
+          roomBadge.innerText = `🟢 跨載具雲端同步已連線（${currentRoomId}）`;
+        }
+      } else if (status === 'connecting') {
+        dot.className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse";
+        label.innerText = `⏳ 連線中...`;
+        container.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 rounded-xl transition flex items-center gap-1.5";
+        if (roomBadge) {
+          roomBadge.className = "text-xs bg-amber-500/20 text-amber-300 border border-amber-400/40 px-2.5 py-0.5 rounded-full font-bold";
+          roomBadge.innerText = `⏳ 正在連線至房間 ${currentRoomId}...`;
+        }
+      } else {
+        dot.className = "w-2 h-2 rounded-full bg-rose-500";
+        label.innerText = `⚠️ 離線單機模式`;
+        container.className = "px-3 py-1.5 sm:px-3.5 sm:py-2 text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 rounded-xl transition flex items-center gap-1.5";
+      }
+    }
+
+    function initMqttSync() {
+      updateNetworkStatus('connecting');
+
+      // 使用公開免費的 MQTT WebSocket Broker（支援全台學校平板與電腦無痛直連）
+      const brokerUrl = "wss://broker.emqx.io:8084/mqtt";
+      const clientId = "client_" + Math.random().toString(16).substring(2, 10);
+
+      try {
+        if (mqttClient) {
+          try { mqttClient.end(true); } catch(e) {}
+        }
+
+        mqttClient = mqtt.connect(brokerUrl, {
+          clientId: clientId,
+          clean: true,
+          connectTimeout: 8000,
+          reconnectPeriod: 4000
+        });
+
+        mqttClient.on('connect', function() {
+          updateNetworkStatus('online');
+          
+          // 訂閱專屬於目前房間代碼的雲端頻道
+          const topic = `${getRoomTopicPrefix()}/#`;
+          mqttClient.subscribe(topic, function(err) {
+            if (!err) {
+              // 學生剛進教室時，向全班發送「同步請求」，請老師螢幕回傳既有作品
+              broadcastMqttMessage('REQUEST_SYNC', { client: clientId });
+            }
+          });
+        });
+
+        mqttClient.on('message', function(topic, message) {
+          try {
+            const data = JSON.parse(message.toString());
+            handleIncomingRealtimeMessage(data);
+          } catch(e) {
+            console.error("MQTT Message parse error", e);
+          }
+        });
+
+        mqttClient.on('error', function(err) {
+          console.warn("MQTT connection error", err);
+          updateNetworkStatus('offline');
+        });
+
+        mqttClient.on('close', function() {
+          updateNetworkStatus('connecting');
+        });
+
+      } catch (err) {
+        console.warn("MQTT init error", err);
+        updateNetworkStatus('offline');
+      }
+    }
+
+    function broadcastMqttMessage(action, payload) {
+      if (mqttClient && mqttClient.connected) {
+        const topic = `${getRoomTopicPrefix()}/event`;
+        const packet = JSON.stringify({
+          action: action,
+          roomId: currentRoomId,
+          payload: payload,
+          timestamp: Date.now()
+        });
+        mqttClient.publish(topic, packet);
+      }
+    }
+
+    function handleIncomingRealtimeMessage(data) {
+      if (!data || data.roomId !== currentRoomId) return;
+
+      if (data.action === 'NEW_SUBMISSION') {
+        const item = data.payload;
+        // 避免重複加入
+        if (!gallerySubmissions.some(x => x.id === item.id)) {
+          gallerySubmissions.unshift(item);
+          saveGalleryData();
+          renderGallery();
+          showToast(`📢 收到【${item.author || '同學'}】最新送出的作品！`);
+          confetti({ particleCount: 45, spread: 60, origin: { y: 0.7 } });
+        }
+      } else if (data.action === 'LIKE_UPDATE') {
+        const { id, likes } = data.payload;
+        const target = gallerySubmissions.find(x => x.id === id);
+        if (target) {
+          target.likes = likes;
+          saveGalleryData();
+          renderGallery();
+        }
+      } else if (data.action === 'REQUEST_SYNC') {
+        // 如果本台電腦/螢幕已經有作品，回傳給剛進來的平板
+        if (gallerySubmissions.length > 0) {
+          broadcastMqttMessage('SYNC_DATA', gallerySubmissions);
+        }
+      } else if (data.action === 'SYNC_DATA') {
+        // 接收全班現有作品清單
+        if (Array.isArray(data.payload) && data.payload.length > 0) {
+          let updated = false;
+          data.payload.forEach(incoming => {
+            if (incoming.roomId === currentRoomId && !gallerySubmissions.some(x => x.id === incoming.id)) {
+              gallerySubmissions.push(incoming);
+              updated = true;
+            }
+          });
+          if (updated) {
+            // 依照時間排序
+            gallerySubmissions.sort((a, b) => b.id - a.id);
+            saveGalleryData();
+            renderGallery();
+          }
+        }
+      } else if (data.action === 'CLEAR_GALLERY') {
+        gallerySubmissions = [];
+        saveGalleryData();
+        renderGallery();
+        showToast("📢 老師已重置清空本展示牆。");
+      }
+    }
 
     function setupBroadcastSync() {
       try {
         if ('BroadcastChannel' in window) {
+          if (roomChannel) { roomChannel.close(); }
           roomChannel = new BroadcastChannel('mandarin_room_' + currentRoomId);
           roomChannel.onmessage = function(event) {
-            if (event.data && event.data.type === 'NEW_SUBMISSION') {
-              gallerySubmissions.unshift(event.data.payload);
-              saveGalleryData();
-              renderGallery();
-              showToast(`📢 收到【${event.data.payload.author || '同學'}】最新送出的作品！`);
-              confetti({ particleCount: 40, spread: 50, origin: { y: 0.8 } });
-            } else if (event.data && event.data.type === 'LIKE_UPDATE') {
-              // 班級同步愛心即時變更
-              const target = gallerySubmissions.find(x => x.id === event.data.payload.id);
-              if (target) {
-                target.likes = event.data.payload.likes;
-                saveGalleryData();
-                renderGallery();
-              }
+            if (event.data) {
+              handleIncomingRealtimeMessage(event.data);
             }
           };
         }
@@ -1361,9 +1432,14 @@
 
     function regenerateRoomCode() {
       currentRoomId = "CLASS-" + Math.floor(1000 + Math.random() * 9000);
+      
+      // 切換房間時，只載入屬於該新房間的資料（避免舊房間資料殘留）
+      loadSavedData();
+      renderGallery();
       setupBroadcastSync();
+      initMqttSync();
       renderClassQrCode();
-      showToast(`🔄 已更新班級房間碼為：${currentRoomId}`);
+      showToast(`🔄 已更換班級房間碼為：${currentRoomId}，展覽牆已切換為全新空白教室！`);
     }
 
     function copyClassRoomLink() {
@@ -1434,13 +1510,17 @@
       saveGalleryData();
       renderGallery();
 
-      // 廣播給同房間的老師螢幕
+      // 1. 同機跨分頁廣播
       if (roomChannel) {
         roomChannel.postMessage({
-          type: 'NEW_SUBMISSION',
+          action: 'NEW_SUBMISSION',
+          roomId: currentRoomId,
           payload: newEntry
         });
       }
+
+      // 2. 真正的跨載具雲端廣播（直接飛到老師投影大螢幕與其他同學平板）
+      broadcastMqttMessage('NEW_SUBMISSION', newEntry);
 
       toggleSubmitModal();
       showToast(`🎉 成功送交作品至展示牆！(房間：${currentRoomId})`);
@@ -1528,16 +1608,17 @@
     }
 
     function broadcastLikeUpdate(id, likes) {
+      const packet = {
+        action: 'LIKE_UPDATE',
+        roomId: currentRoomId,
+        payload: { id: id, likes: likes }
+      };
+
       if (roomChannel) {
-        try {
-          roomChannel.postMessage({
-            type: 'LIKE_UPDATE',
-            payload: { id: id, likes: likes }
-          });
-        } catch (e) {
-          console.log("Broadcast like update error", e);
-        }
+        try { roomChannel.postMessage(packet); } catch (e) {}
       }
+
+      broadcastMqttMessage('LIKE_UPDATE', { id: id, likes: likes });
     }
 
     function openClearGalleryModal() {
@@ -1551,9 +1632,15 @@
     function confirmClearGallery() {
       gallerySubmissions = [];
       saveGalleryData();
-      localStorage.removeItem('mandarin_liked_posts');
+      localStorage.removeItem('mandarin_liked_posts_' + currentRoomId);
       renderGallery();
       closeClearGalleryModal();
+
+      if (roomChannel) {
+        roomChannel.postMessage({ action: 'CLEAR_GALLERY', roomId: currentRoomId });
+      }
+      broadcastMqttMessage('CLEAR_GALLERY', {});
+
       showToast("展示牆已重置清空。");
     }
 
@@ -1716,8 +1803,13 @@
       localStorage.setItem('mandarin_card_pool', JSON.stringify(cardPool));
     }
 
+    function getRoomStorageKey() {
+      return 'mandarin_gallery_' + currentRoomId;
+    }
+
     function saveGalleryData() {
-      localStorage.setItem('mandarin_gallery_data', JSON.stringify(gallerySubmissions));
+      // 依房間代碼獨立儲存，避免跨房間混淆
+      localStorage.setItem(getRoomStorageKey(), JSON.stringify(gallerySubmissions));
     }
 
     function loadSavedData() {
@@ -1725,10 +1817,21 @@
       if (savedPool) {
         try { cardPool = JSON.parse(savedPool); } catch (e) {}
       }
-      const savedGallery = localStorage.getItem('mandarin_gallery_data');
+
+      // 嚴格依據當前房間代碼載入作品，徹底排除上一個房間的舊作品
+      gallerySubmissions = [];
+      const savedGallery = localStorage.getItem(getRoomStorageKey());
       if (savedGallery) {
-        try { gallerySubmissions = JSON.parse(savedGallery); } catch (e) {}
+        try {
+          const parsed = JSON.parse(savedGallery);
+          if (Array.isArray(parsed)) {
+            gallerySubmissions = parsed.filter(item => !item.roomId || item.roomId === currentRoomId);
+          }
+        } catch (e) {
+          gallerySubmissions = [];
+        }
       }
+
       const savedPadlet = localStorage.getItem('mandarin_padlet_url');
       if (savedPadlet) {
         const input = document.getElementById('teacherPadletInput');
