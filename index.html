@@ -72,8 +72,13 @@
         
         <!-- Logo 與標題 -->
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-100 text-lg sm:text-xl font-black">
-            營
+          <!-- 自訂 Logo 圖片區：方法 A 本地讀取 ./logo.png -->
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl overflow-hidden shadow-md shadow-indigo-100 border border-slate-200 flex-shrink-0 bg-indigo-50 flex items-center justify-center">
+            <img id="siteLogoImg" 
+                 src="./logo.png" 
+                 alt="Logo" 
+                 class="w-full h-full object-cover"
+                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white text-lg sm:text-xl font-black\'>營</div>';">
           </div>
           <div>
             <div class="flex items-center gap-2">
